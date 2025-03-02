@@ -2,32 +2,39 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Platform } from "react-native";
 import axios from "axios";
 
-const API_URL = "http://192.168.0.107:8080/users/login";
+const API_URL = "http://192.168.0.107:8080/users/register"; // Înlocuiește cu URL-ul corect
 
-const LoginScreen = ({ navigation }) => {
+const SignUpScreen = ({ navigation }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
-    const handleLogin = async () => {
-        if (!email || !password) {
-            Platform.OS === "web" ? window.alert("Eroare: Te rog introdu email-ul și parola!") : Alert.alert("Eroare", "Te rog introdu email-ul și parola!");
+    const handleSignUp = async () => {
+        if (!email || !password || !confirmPassword) {
+            Platform.OS === "web" ? window.alert("Te rog completează toate câmpurile!") : Alert.alert("Eroare", "Te rog completează toate câmpurile!");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            Platform.OS === "web" ? window.alert("Parolele nu coincid!") : Alert.alert("Eroare", "Parolele nu coincid!");
             return;
         }
 
         try {
             const response = await axios.post(API_URL, { email, password }, { headers: { "Content-Type": "application/json" } });
-            Platform.OS === "web" ? window.alert("Autentificare reușită!") : Alert.alert("Succes", "Autentificare reușită!");
-            console.log("Token primit:", response.data);
-            navigation.navigate("Home");
+            Platform.OS === "web" ? window.alert("Înregistrare reușită!") : Alert.alert("Succes", "Înregistrare reușită!");
+
+            console.log("Răspuns server:", response.data);
+            navigation.navigate("Login");
         } catch (error) {
-            console.error("Eroare la autentificare:", error.response?.data || error.message);
-            Platform.OS === "web" ? window.alert("Eroare: Email sau parolă incorectă!") : Alert.alert("Eroare", error.response?.data || "Email sau parolă incorectă!");
+            console.error("Eroare la înregistrare:", error.response?.data || error.message);
+            Platform.OS === "web" ? window.alert("Eroare la înregistrare!") : Alert.alert("Eroare", error.response?.data || "Eroare la înregistrare!");
         }
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Autentificare</Text>
+            <Text style={styles.title}>Sign Up</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -45,8 +52,16 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Login</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Confirmă parola"
+                placeholderTextColor="#A0A0A0"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+            />
+            <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+                <Text style={styles.buttonText}>Sign Up</Text>
             </TouchableOpacity>
         </View>
     );
@@ -89,4 +104,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default LoginScreen;
+export default SignUpScreen;
