@@ -1,115 +1,88 @@
-import React, { useRef, useEffect } from "react";
-import { View, Text, StyleSheet, Animated, TouchableOpacity, Dimensions } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, Alert } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 
-const { width } = Dimensions.get("window");
-const tabWidth = width / 3;
+const Tab = createBottomTabNavigator();
 
-// Funcție pentru deschiderea camerei
-const openCamera = async () => {
-    // Cere permisiunea utilizatorului pentru cameră
+// 📸 Funcție pentru deschiderea camerei
+const openCamera = async (navigation) => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-        alert("We need camera permissions to make this work!");
+        Alert.alert("Permisiune necesară", "Trebuie să permiți accesul la cameră pentru a folosi această funcție.");
         return;
     }
 
-    // Deschide camera
     const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.IMAGE, // deprecated, might not work
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 1,
     });
 
-    if (!result.canceled) {
-        console.log("Photo taken: ", result.assets[0].uri);
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log("📸 Photo taken:", result.assets[0].uri);
+        navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
     }
 };
 
+// 📷 **CameraScreen - Deschide automat camera când intri în tab**
+const CameraScreen = () => {
+    const navigation = useNavigation();
 
+    useFocusEffect(
+        React.useCallback(() => {
+            openCamera(navigation);
+        }, [navigation])
+    );
+
+    return <View style={styles.screen} />;
+};
+
+// 🗓️ Calendar Screen
 const CalendarScreen = () => (
     <View style={styles.screen}>
         <Text style={styles.text}>Calendar Screen</Text>
     </View>
 );
 
-const CameraScreen = () => (
-    <View style={styles.screen}>
-        <Text style={styles.text}>Camera Screen</Text>
-    </View>
-);
-
+// 👤 Profile Screen
 const ProfileScreen = () => (
     <View style={styles.screen}>
         <Text style={styles.text}>Profile Screen</Text>
     </View>
 );
 
-const Tab = createBottomTabNavigator();
-
-const AnimatedIcon = ({ name, color, focused }) => {
-    const scaleAnim = useRef(new Animated.Value(focused ? 1.2 : 1)).current;
-
-    useEffect(() => {
-        Animated.timing(scaleAnim, {
-            toValue: focused ? 1.2 : 1,
-            duration: 200,
-            useNativeDriver: true,
-        }).start();
-    }, [focused]);
-
+// **Tab Navigator**
+const AppTabs = () => {
     return (
-        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <Icon name={name} size={30} color={color} />
-        </Animated.View>
+        <Tab.Navigator
+            screenOptions={({ route }) => ({
+                tabBarIcon: ({ color, size }) => {
+                    let iconName;
+                    if (route.name === "Calendar") {
+                        iconName = "calendar";
+                    } else if (route.name === "Camera") {
+                        iconName = "camera";
+                    } else if (route.name === "Profile") {
+                        iconName = "person";
+                    }
+                    return <Icon name={iconName} size={size} color={color} />;
+                },
+                tabBarActiveTintColor: "#FF6B6B",
+                tabBarInactiveTintColor: "gray",
+                tabBarStyle: styles.tabBar, // **Navbar-ul tău rămâne intact**
+                headerShown: false, // **Ascunde header-ul alb**
+            })}
+        >
+            <Tab.Screen name="Calendar" component={CalendarScreen} />
+            <Tab.Screen name="Camera" component={CameraScreen} />
+            <Tab.Screen name="Profile" component={ProfileScreen} />
+        </Tab.Navigator>
     );
 };
 
-const HomeScreen = () => {
-    return (
-        <View style={styles.container}>
-            <Tab.Navigator
-                screenOptions={({ route }) => ({
-                    tabBarIcon: ({ color, focused }) => {
-                        let iconName;
-
-                        if (route.name === "Calendar") {
-                            iconName = "calendar";
-                        } else if (route.name === "Camera") {
-                            iconName = "camera";
-                        } else if (route.name === "Profile") {
-                            iconName = "person";
-                        }
-
-                        return (
-                            <View style={styles.iconContainer}>
-                                {focused && <View style={styles.activeBackground} />}
-                                <AnimatedIcon name={iconName} color={color} focused={focused} />
-                            </View>
-                        );
-                    },
-                    tabBarActiveTintColor: "#FF6B6B",
-                    tabBarInactiveTintColor: "gray",
-                    tabBarStyle: styles.tabBar,
-                    tabBarShowLabel: false,
-                    headerShown: false,
-                })}
-            >
-                <Tab.Screen name="Calendar" component={CalendarScreen} />
-                <Tab.Screen name="Camera" component={CalendarScreen} options={{
-                    tabBarButton: (props) => (
-                        <TouchableOpacity {...props} onPress={openCamera} style={styles.iconContainer}>
-                            <Icon name="camera" size={30} color="gray" />
-                        </TouchableOpacity>
-                    )
-                }} />
-                <Tab.Screen name="Profile" component={ProfileScreen} />
-            </Tab.Navigator>
-        </View>
-    );
-};
-
+// 🎨 **Stilurile tale păstrate exact așa cum le-ai definit**
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -148,11 +121,11 @@ const styles = StyleSheet.create({
     activeBackground: {
         position: "absolute",
         width: 65,
-        height: 50,
+        height: 60,
         borderRadius: 25,
-        backgroundColor: "#1E1E1E", // Culoarea navbarului
-        top: -15, // Urcă puțin peste navbar
+        backgroundColor: "#1E1E1E",
+        top: -15, // **Urcă puțin peste navbar, exact cum ai vrut**
     },
 });
 
-export default HomeScreen;
+export default AppTabs;

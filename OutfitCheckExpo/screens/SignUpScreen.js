@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Platform } from "react-native";
 import axios from "axios";
-
-const API_URL = "http://192.168.0.107:8080/users/register"; // Înlocuiește cu URL-ul corect
+import API_URLS from "../apiConfig"; // Import API_URLS
 
 const SignUpScreen = ({ navigation }) => {
     const [email, setEmail] = useState("");
@@ -21,17 +20,19 @@ const SignUpScreen = ({ navigation }) => {
         }
 
         try {
-            const response = await axios.post(API_URL, { email, password }, { headers: { "Content-Type": "application/json" } });
-            Platform.OS === "web" ? window.alert("Înregistrare reușită!") : Alert.alert("Succes", "Înregistrare reușită!");
+            const response = await axios.post(API_URLS.REGISTER, { email, password }, { headers: { "Content-Type": "application/json" } });
 
+            Platform.OS === "web" ? window.alert("Înregistrare reușită!") : Alert.alert("Succes", "Înregistrare reușită!");
             console.log("Răspuns server:", response.data);
+
             navigation.navigate("Login");
         } catch (error) {
             console.error("Eroare la înregistrare:", error.response?.data || error.message);
-            Platform.OS === "web" ? window.alert("Eroare la înregistrare!") : Alert.alert("Eroare", error.response?.data || "Eroare la înregistrare!");
+            Platform.OS === "web"
+                ? window.alert("Eroare la înregistrare!")
+                : Alert.alert("Eroare", error.response?.data || "Eroare la înregistrare!");
         }
     };
-
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Sign Up</Text>
