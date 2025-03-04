@@ -1,6 +1,5 @@
 import Constants from "expo-constants";
 
-// Obține IP-ul corect în funcție de cum rulezi Expo
 const getApiBase = () => {
     if (Constants.expoConfig?.hostUri) {
         return `http://${Constants.expoConfig.hostUri.split(':')[0]}:8080`;
@@ -14,10 +13,12 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 
 const API_URLS = {
+    BASE: API_BASE, // ✅ Adaugă BASE URL pentru a fi folosit în apiClient.js
     LOGIN: `${API_BASE}/users/login`,
     REGISTER: `${API_BASE}/users/register`,
     ADD_CLOTHING: `${API_BASE}/api/clothing/add`,
     GET_CLOTHING_CATEGORIES: `${API_BASE}/api/categories/all`,
+    GET_CLOTHING_ITEMS_BY_USER: `${API_BASE}/api/clothing/user`
 };
 
 export default API_URLS;

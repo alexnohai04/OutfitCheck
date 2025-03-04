@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -46,7 +46,7 @@ const CalendarScreen = () => (
     </View>
 );
 
-// 👤 Profile Screen
+//👤 Profile Screen
 const ProfileScreen = () => (
     <View style={styles.screen}>
         <Text style={styles.text}>Profile Screen</Text>
@@ -77,7 +77,16 @@ const AppTabs = () => {
         >
             <Tab.Screen name="Calendar" component={CalendarScreen} />
             <Tab.Screen name="Camera" component={CameraScreen} />
-            <Tab.Screen name="Profile" component={ProfileScreen} />
+            <Tab.Screen
+                name="Profile"
+                component={ProfileScreen}
+                listeners={({ navigation }) => ({
+                    tabPress: (e) => {
+                        e.preventDefault(); // Oprește afișarea `ProfileScreen`
+                        navigation.navigate("ClothingItems"); // Navighează direct la `ClothingItemsScreen`
+                    },
+                })}
+            />
         </Tab.Navigator>
     );
 };

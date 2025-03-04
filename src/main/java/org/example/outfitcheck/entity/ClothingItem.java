@@ -30,6 +30,6 @@ public class ClothingItem {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
-    @JsonIgnoreProperties({"clothingItems"}) // 🚀 Permite serializarea `owner`, dar evită recursivitatea
+    @JsonBackReference  // 🚀 Permite serializarea `owner`, dar evită recursivitatea
     private User owner;
 }

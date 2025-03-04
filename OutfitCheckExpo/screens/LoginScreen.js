@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, {useContext, useState} from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Platform } from "react-native";
 import axios from "axios";
 
 import API_URLS from "../apiConfig"; // Import API_URLS
+import { UserContext } from "../UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_URL = API_URLS.LOGIN;
 
 const LoginScreen = ({ navigation }) => {
+    const { loginUser } = useContext(UserContext);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -16,11 +19,22 @@ const LoginScreen = ({ navigation }) => {
             return;
         }
 
+
         try {
             const response = await axios.post(API_URL, { email, password }, { headers: { "Content-Type": "application/json" } });
             Platform.OS === "web" ? window.alert("Autentificare reușită!") : Alert.alert("Succes", "Autentificare reușită!");
-            console.log("Token primit:", response.data);
-            navigation.navigate("Home");
+
+
+            try {
+                const token = response.data.token; // ✅ Extrage token-ul din răspuns
+                console.log("Token salvat:", token);
+                await loginUser(token);
+                navigation.navigate("Home");
+            } catch (error) {
+                console.error("Eroare la salvarea token-ului:", error);
+            }
+
+
         } catch (error) {
             console.error("Eroare la autentificare:", error.response?.data || error.message);
             Platform.OS === "web" ? window.alert("Eroare: Email sau parolă incorectă!") : Alert.alert("Eroare", error.response?.data || "Email sau parolă incorectă!");

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useContext} from "react";
 import {
     View,
     Text,
@@ -16,38 +16,39 @@ import {
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import API_URLS from "../apiConfig";
+import { UserContext } from "../UserContext";
+import apiClient from "../apiClient"; // ✅ Importă API-ul configurat cu JWT
 
 const AddClothingItemScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { imageUri } = route.params || {};
+    const { userId } = useContext(UserContext);
 
     const [color, setColor] = useState("");
     const [material, setMaterial] = useState("");
-    const [category, setCategory] = useState(null); // Inițial fără selecție
+    const [category, setCategory] = useState(null);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(true); // Stare de încărcare
+    const [loading, setLoading] = useState(false);
 
     // 📌 Fetch categorii din backend
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await fetch(API_URLS.GET_CLOTHING_CATEGORIES); // Endpoint backend
-                const data = await response.json();
+                const response = await apiClient.get(API_URLS.GET_CLOTHING_CATEGORIES);
+                const data = response.data; // ✅ Axios returnează direct `data`
 
-                // Transformă rezultatul în formatul necesar pentru DropDownPicker
+                // 🔥 Transformă rezultatul astfel încât `value` să fie `category.id`, nu `category.name`
                 const formattedCategories = data.map((category) => ({
-                    label: category.name, // Numele categoriei
-                    value: category.name, // Valoarea selectată
+                    label: category.name, // Ex: "Shoes"
+                    value: category.id // Ex: 3
                 }));
 
                 setItems(formattedCategories);
-                setLoading(false);
             } catch (error) {
-                console.error("Eroare la încărcarea categoriilor:", error);
+                console.error("Eroare la încărcarea categoriilor:", error.response?.data || error.message);
                 Alert.alert("Eroare", "Nu s-au putut încărca categoriile.");
-                setLoading(false);
             }
         };
 
@@ -64,34 +65,34 @@ const AddClothingItemScreen = () => {
             return;
         }
 
+        setLoading(true); // 🚀 Începem încărcarea
+
         const clothingItem = {
             imageUrl: imageUri,
             color,
             material,
-            categoryId: category, // Trimitem ID-ul categoriei, nu textul
-            userId: 8 // 🔥 Schimbă acest ID cu cel real al utilizatorului (ex: din AsyncStorage)
+            categoryId: category,
+            userId: userId
         };
 
+        console.log("📦 Request trimis către backend:", JSON.stringify(clothingItem));
+
         try {
-            const response = await fetch(API_URLS.ADD_CLOTHING, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(clothingItem),
-            });
+            const response = await apiClient.post(API_URLS.ADD_CLOTHING, clothingItem);
 
-            const data = await response.json();
-
-            if (response.ok) {
+            if (response.status === 201 || response.status === 200) {
                 Alert.alert("Succes", "Articolul vestimentar a fost salvat!");
-                navigation.goBack(); // Ne întoarcem la ecranul anterior
+                navigation.navigate("ClothingItems");
             } else {
-                Alert.alert("Eroare", data.message || "Nu s-a putut salva articolul. Încearcă din nou.");
+                Alert.alert("Eroare", response.data.message || "Nu s-a putut salva articolul. Încearcă din nou.");
             }
         } catch (error) {
+            console.error("Eroare la salvarea articolului:", error.response?.data || error.message);
             Alert.alert("Eroare", "A apărut o problemă la salvare. Verifică conexiunea la server.");
+        } finally {
+            setLoading(false); // 🚀 Oprire încărcare
         }
     };
-
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -133,10 +134,10 @@ const AddClothingItemScreen = () => {
                     ) : (
                         <DropDownPicker
                             open={open}
-                            value={category} // 🔥 Trebuie să fie categoryId, nu numele categoriei
+                            value={category} // 🔥 Acum va conține ID-ul categoriei
                             items={items}
                             setOpen={setOpen}
-                            setValue={setCategory} // 🔥 Acum setăm ID-ul categoriei, nu textul
+                            setValue={setCategory} // 🔥 Trebuie să seteze ID-ul, nu textul
                             setItems={setItems}
                             containerStyle={styles.dropdownContainer}
                             style={styles.dropdown}
@@ -149,6 +150,7 @@ const AddClothingItemScreen = () => {
                             zIndexInverse={3000}
                             onOpen={Keyboard.dismiss}
                         />
+
 
                     )}
 
