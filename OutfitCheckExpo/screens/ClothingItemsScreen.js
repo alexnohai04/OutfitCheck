@@ -9,18 +9,24 @@ const ClothingItemsScreen = () => {
     const navigation = useNavigation();
     const [clothingItems, setClothingItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { userId } = useContext(UserContext);
+    const { userId, logoutUser } = useContext(UserContext);
 
     useEffect(() => {
+        if (!userId) {
+            console.log("⚠️ userId nu este definit, nu fac request către API.");
+            return;
+        }
+
         const fetchClothingItems = async () => {
+            setLoading(true);
             try {
                 const response = await apiClient.get(`${API_URLS.GET_CLOTHING_ITEMS_BY_USER}/${userId}`);
-                const data = await response.data;
+                console.log("📥 Răspuns API:", response);
 
-                if (response.ok) {
-                    setClothingItems(data);
+                if (response.status === 200) {
+                    setClothingItems(response.data);
                 } else {
-                    Alert.alert("Eroare", data.message || "Nu s-au putut încărca articolele vestimentare.");
+                    Alert.alert("Eroare", response.data.message || "Nu s-au putut încărca articolele vestimentare.");
                 }
             } catch (error) {
                 Alert.alert("Eroare", "A apărut o problemă la încărcarea hainelor.");
@@ -31,8 +37,12 @@ const ClothingItemsScreen = () => {
         };
 
         fetchClothingItems();
-    }, []);
+    }, [userId]); // ✅ Adăugăm `userId` ca dependință
 
+    const handleLogout = async () => {
+        await logoutUser(); // ✅ Șterge token-ul și userId-ul
+        navigation.navigate("Welcome"); // ✅ Redirecționează la ecranul inițial
+    };
     if (loading) {
         return (
             <View style={styles.container}>

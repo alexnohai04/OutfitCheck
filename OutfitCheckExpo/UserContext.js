@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 // ✅ Import corect
 
 export const UserContext = createContext();
@@ -20,13 +20,13 @@ export const UserProvider = ({ children }) => {
                 }
 
                 console.log("📥 JWT extras:", token);
-                const decodedToken = jwtDecode.default(token); // ✅ Decodează token-ul
+                const decodedToken = jwtDecode(token); // ✅ Decodează token-ul
                 console.log("🔍 Token decodificat:", decodedToken);
 
-                if (decodedToken.userId) {
-                    setUserId(decodedToken.userId); // ✅ Setează `userId`
+                if (decodedToken.id) {
+                    setUserId(decodedToken.id); // ✅ Folosește `id` în loc de `userId`
                 } else {
-                    console.error("⚠️ JWT nu conține `userId`!");
+                    console.error("⚠️ JWT nu conține `id`!");
                 }
             } catch (error) {
                 console.error("Eroare la decodarea JWT-ului:", error);
@@ -45,8 +45,8 @@ export const UserProvider = ({ children }) => {
             const decodedToken = jwtDecode(token); // ✅ Decodează token-ul
             console.log("🔍 Token decodificat:", decodedToken);
 
-            if (decodedToken.userId) {
-                setUserId(decodedToken.userId); // ✅ Setează `userId`
+            if (decodedToken.id) {
+                setUserId(decodedToken.id); // ✅ Setează `userId`
             } else {
                 console.error("⚠️ JWT nu conține `userId`!");
             }
@@ -55,7 +55,6 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    // 📌 Funcție pentru logout (șterge JWT și `userId`)
     const logoutUser = async () => {
         await AsyncStorage.removeItem("jwt_token");
         setUserId(null);

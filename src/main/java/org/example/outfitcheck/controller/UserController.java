@@ -1,5 +1,6 @@
 package org.example.outfitcheck.controller;
 
+import org.example.outfitcheck.dto.UserDTO;
 import org.example.outfitcheck.entity.User;
 import org.example.outfitcheck.config.JwtUtil;
 import org.example.outfitcheck.service.UserService;
@@ -21,6 +22,8 @@ public class UserController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+
+
 
     @Autowired
     public UserController(UserService userService, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
@@ -61,15 +64,24 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid credentials"));
         }
 
-        // ✅ Generează token JWT și returnează-l
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getId());
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    @GetMapping("/profile")
-    public ResponseEntity<Map<String, String>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername(); // ✅ Spring Security gestionează autenticarea
+//    @GetMapping("/profile")
+//    public ResponseEntity<Map<String, String>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
+//        String email = userDetails.getUsername(); // ✅ Spring Security gestionează autenticarea
+//
+//        return ResponseEntity.ok(Map.of("email", email));
+//    }
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<UserDTO> getUserProfile(@PathVariable Long id) {
+        User user = userService.getUserById(id);
 
-        return ResponseEntity.ok(Map.of("email", email));
+        // Convertim User -> UserDTO
+        UserDTO userDTO = new UserDTO(user.getId(), user.getEmail());
+
+        return ResponseEntity.ok(userDTO);
     }
+
 }

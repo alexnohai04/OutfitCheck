@@ -3,6 +3,7 @@ package org.example.outfitcheck.config;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+//import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -45,5 +46,3 @@ public class SecurityConfig {
         return NimbusJwtDecoder.withSecretKey(secretKey).build();
     }
 }
-
-

@@ -18,7 +18,12 @@ const API_URLS = {
     REGISTER: `${API_BASE}/users/register`,
     ADD_CLOTHING: `${API_BASE}/api/clothing/add`,
     GET_CLOTHING_CATEGORIES: `${API_BASE}/api/categories/all`,
-    GET_CLOTHING_ITEMS_BY_USER: `${API_BASE}/api/clothing/user`
+    GET_CLOTHING_ITEMS_BY_USER: `${API_BASE}/api/clothing/user`,
+    GET_USER_PROFILE: `${API_BASE}/users/profile`,
+
+    CREATE_OUTFIT: `${API_BASE}/api/outfits/create`,
+    GET_OUTFITS_BY_USER: (userId) => `${API_BASE}/api/outfits/user/${userId}`,
+    DELETE_OUTFIT: (outfitId) => `${API_BASE}/api/outfits/${outfitId}`
 };
 
 export default API_URLS;

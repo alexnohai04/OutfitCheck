@@ -1,7 +1,12 @@
 package org.example.outfitcheck.controller;
 
+import org.example.outfitcheck.dto.OutfitDTO;
+import org.example.outfitcheck.entity.ClothingItem;
 import org.example.outfitcheck.entity.Outfit;
+import org.example.outfitcheck.entity.User;
+import org.example.outfitcheck.repository.ClothingItemRepository;
 import org.example.outfitcheck.repository.OutfitRepository;
+import org.example.outfitcheck.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,15 +17,35 @@ import java.util.Optional;
 @RequestMapping("/api/outfits")
 public class OutfitController {
     private final OutfitRepository outfitRepository;
+    private final UserRepository userRepository;
+    private final ClothingItemRepository clothingItemRepository;
 
-    public OutfitController(OutfitRepository outfitRepository) {
+    public OutfitController(OutfitRepository outfitRepository, UserRepository userRepository, ClothingItemRepository clothingItemRepository) {
         this.outfitRepository = outfitRepository;
+        this.userRepository = userRepository;
+        this.clothingItemRepository = clothingItemRepository;
     }
 
     // 🔹 1. Creare outfit nou
+
     @PostMapping("/create")
-    public ResponseEntity<Outfit> createOutfit(@RequestBody Outfit outfit) {
-        Outfit savedOutfit = outfitRepository.save(outfit);
+    public ResponseEntity<Outfit> createOutfit(@RequestBody OutfitDTO outfitDTO) {
+        Optional<User> userOptional = userRepository.findById(outfitDTO.getCreatorId());
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        User creator = userOptional.get();
+
+        // Convertim lista de ID-uri în obiecte ClothingItem
+        List<ClothingItem> clothingItems = clothingItemRepository.findAllById(outfitDTO.getItems());
+
+        Outfit newOutfit = new Outfit();
+        newOutfit.setName(outfitDTO.getName());
+        newOutfit.setCreator(creator);
+        newOutfit.setClothingItems(clothingItems);
+
+        Outfit savedOutfit = outfitRepository.save(newOutfit);
         return ResponseEntity.ok(savedOutfit);
     }
 

@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
     View,
     Text,
@@ -17,7 +17,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import API_URLS from "../apiConfig";
 import { UserContext } from "../UserContext";
-import apiClient from "../apiClient"; // ✅ Importă API-ul configurat cu JWT
+import apiClient from "../apiClient";
 
 const AddClothingItemScreen = () => {
     const navigation = useNavigation();
@@ -32,23 +32,21 @@ const AddClothingItemScreen = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // 📌 Fetch categorii din backend
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const response = await apiClient.get(API_URLS.GET_CLOTHING_CATEGORIES);
-                const data = response.data; // ✅ Axios returnează direct `data`
+                const data = response.data;
 
-                // 🔥 Transformă rezultatul astfel încât `value` să fie `category.id`, nu `category.name`
                 const formattedCategories = data.map((category) => ({
-                    label: category.name, // Ex: "Shoes"
-                    value: category.id // Ex: 3
+                    label: category.name,
+                    value: category.id
                 }));
 
                 setItems(formattedCategories);
             } catch (error) {
-                console.error("Eroare la încărcarea categoriilor:", error.response?.data || error.message);
-                Alert.alert("Eroare", "Nu s-au putut încărca categoriile.");
+                console.error("Error loading categories:", error.response?.data || error.message);
+                Alert.alert("Error", "Unable to load categories.");
             }
         };
 
@@ -57,15 +55,15 @@ const AddClothingItemScreen = () => {
 
     const handleSave = async () => {
         if (!imageUri) {
-            Alert.alert("Eroare", "Nu există nicio imagine! Te rog capturează o fotografie.");
+            Alert.alert("Error", "No image available! Please take a photo.");
             return;
         }
         if (!color || !material || !category) {
-            Alert.alert("Eroare", "Te rog completează toate câmpurile!");
+            Alert.alert("Error", "Please fill in all fields!");
             return;
         }
 
-        setLoading(true); // 🚀 Începem încărcarea
+        setLoading(true);
 
         const clothingItem = {
             imageUrl: imageUri,
@@ -75,22 +73,22 @@ const AddClothingItemScreen = () => {
             userId: userId
         };
 
-        console.log("📦 Request trimis către backend:", JSON.stringify(clothingItem));
+        console.log("📦 Request sent to backend:", JSON.stringify(clothingItem));
 
         try {
             const response = await apiClient.post(API_URLS.ADD_CLOTHING, clothingItem);
 
             if (response.status === 201 || response.status === 200) {
-                Alert.alert("Succes", "Articolul vestimentar a fost salvat!");
+                Alert.alert("Success", "Clothing item saved successfully!");
                 navigation.navigate("ClothingItems");
             } else {
-                Alert.alert("Eroare", response.data.message || "Nu s-a putut salva articolul. Încearcă din nou.");
+                Alert.alert("Error", response.data.message || "Failed to save item. Please try again.");
             }
         } catch (error) {
-            console.error("Eroare la salvarea articolului:", error.response?.data || error.message);
-            Alert.alert("Eroare", "A apărut o problemă la salvare. Verifică conexiunea la server.");
+            console.error("Error saving item:", error.response?.data || error.message);
+            Alert.alert("Error", "An issue occurred while saving. Check your server connection.");
         } finally {
-            setLoading(false); // 🚀 Oprire încărcare
+            setLoading(false);
         }
     };
 
@@ -102,18 +100,18 @@ const AddClothingItemScreen = () => {
                 style={styles.container}
             >
                 <View style={styles.innerContainer}>
-                    <Text style={styles.title}>Adaugă un articol vestimentar</Text>
+                    <Text style={styles.title}>Add Clothing Item</Text>
 
                     {imageUri ? (
                         <Image source={{ uri: imageUri }} style={styles.image} />
                     ) : (
                         <View style={styles.imagePlaceholder}>
-                            <Text style={styles.imagePlaceholderText}>Nicio imagine</Text>
+                            <Text style={styles.imagePlaceholderText}>No image</Text>
                         </View>
                     )}
 
                     <TextInput
-                        placeholder="Culoare"
+                        placeholder="Color"
                         placeholderTextColor="#A0A0A0"
                         value={color}
                         onChangeText={setColor}
@@ -128,21 +126,21 @@ const AddClothingItemScreen = () => {
                         style={styles.input}
                     />
 
-                    <Text style={styles.label}>Categorie:</Text>
+                    <Text style={styles.label}>Category:</Text>
                     {loading ? (
                         <ActivityIndicator size="large" color="#FFFFFF" />
                     ) : (
                         <DropDownPicker
                             open={open}
-                            value={category} // 🔥 Acum va conține ID-ul categoriei
+                            value={category}
                             items={items}
                             setOpen={setOpen}
-                            setValue={setCategory} // 🔥 Trebuie să seteze ID-ul, nu textul
+                            setValue={setCategory}
                             setItems={setItems}
                             containerStyle={styles.dropdownContainer}
                             style={styles.dropdown}
                             dropDownContainerStyle={styles.dropdownList}
-                            placeholder="Selectează o categorie"
+                            placeholder="Select a category"
                             placeholderStyle={styles.placeholderText}
                             textStyle={styles.dropdownText}
                             labelStyle={styles.dropdownLabel}
@@ -150,12 +148,10 @@ const AddClothingItemScreen = () => {
                             zIndexInverse={3000}
                             onOpen={Keyboard.dismiss}
                         />
-
-
                     )}
 
                     <TouchableOpacity onPress={handleSave} style={styles.button}>
-                        <Text style={styles.buttonText}>Salvează articolul</Text>
+                        <Text style={styles.buttonText}>Save Item</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
