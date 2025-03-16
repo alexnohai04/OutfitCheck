@@ -13,18 +13,13 @@ import ClothingItemsScreen from "./screens/ClothingItemsScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import { UserProvider, UserContext } from "./UserContext";
 import OutfitBuilderScreen from "./screens/OutfitBuilderScreen";
+import UserOutfitsScreen from "./screens/UserOutfitScreen";
+import OutfitDetailsScreen from "./screens/OutfitDetailsScreen";
 
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
-    const { userId } = useContext(UserContext);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 1000); // Simulate loading time
-    }, [userId]);
+    const { userId, isLoading } = useContext(UserContext); // ✅ Use `isLoading` from context
 
     if (isLoading) {
         return (
@@ -45,6 +40,8 @@ const AppNavigator = () => {
                 <Stack.Screen name="ClothingItems" component={ClothingItemsScreen} options={{ title: "My Clothes" }} />
                 <Stack.Screen name="Profile" component={ProfileScreen} />
                 <Stack.Screen name="OutfitBuilder" component={OutfitBuilderScreen} />
+                <Stack.Screen name="UserOutfits" component={UserOutfitsScreen} />
+                <Stack.Screen name="OutfitDetails" component={OutfitDetailsScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

@@ -63,6 +63,11 @@ const ProfileScreen = () => {
                 <Text style={globalStyles.buttonText}>Create an Outfit</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity style={globalStyles.button} onPress={() => navigation.navigate("UserOutfits")}>
+                <Text style={globalStyles.buttonText}>Show Outfits</Text>
+            </TouchableOpacity>
+
+
             <TouchableOpacity style={globalStyles.button} onPress={() => alert("Feature in progress!")}>
                 <Text style={globalStyles.buttonText}>Edit Profile</Text>
             </TouchableOpacity>

@@ -6,19 +6,18 @@ import {
     Image,
     PanResponder,
     SafeAreaView, ScrollView,
-    SectionList,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View
 } from "react-native";
-import DraggableFlatList from "react-native-draggable-flatlist";
 import Animated, {useAnimatedStyle, useSharedValue, withSpring} from "react-native-reanimated";
 import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import globalStyles from "../styles/globalStyles";
 import {UserContext} from "../UserContext";
+import { useNavigation } from '@react-navigation/native';
 
 const { height } = Dimensions.get("window");
 
@@ -26,10 +25,20 @@ const OutfitBuilderScreen = () => {
     const [wardrobe, setWardrobe] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
     const [outfitName, setOutfitName] = useState();
+    const navigation = useNavigation();
     const { userId } = useContext(UserContext);
 
     const panelPosition = useSharedValue(height * 0.5); // 📌 Panel starts at 50% of the screen
     const isDragging = useRef(false);
+
+    const CATEGORY_ORDER = ["Hat", "Top", "Pants", "Shoes"];
+    const CATEGORY_IDS = {
+        Hat: 4,
+        Top: 1,
+        Pants: 2,
+        Shoes: 3,
+    };
+
 
     useEffect(() => {
         const fetchClothingItems = async () => {
@@ -45,25 +54,42 @@ const OutfitBuilderScreen = () => {
         fetchClothingItems();
     }, [userId]);
 
-    const groupedClothing = wardrobe.reduce((acc, item) => {
-        const category = item.category.name;
-        if (!acc[category]) acc[category] = [];
-        acc[category].push(item);
-        return acc;
-    }, {});
+    // const groupedClothing = wardrobe.reduce((acc, item) => {
+    //     const category = item.category.name;
+    //     if (!acc[category]) acc[category] = [];
+    //     acc[category].push(item);
+    //     return acc;
+    // }, {});
 
-    const sections = Object.keys(groupedClothing).map((category) => ({
-        title: category,
-        data: groupedClothing[category],
-    }));
+    // const sections = Object.keys(groupedClothing).map((category) => ({
+    //     title: category,
+    //     data: groupedClothing[category],
+    // }));
 
     const toggleItemSelection = (item) => {
-        setSelectedItems((prevItems) =>
-            prevItems.some((i) => i.id === item.id)
-                ? prevItems.filter((i) => i.id !== item.id)
-                : [...prevItems, item]
-        );
+        setSelectedItems((prevItems) => {
+            // Dacă articolul este deja selectat, îl elimină
+            if (prevItems.some(i => i.id === item.id)) {
+                return prevItems.filter(i => i.id !== item.id);
+            }
+
+            // Gestionăm cazul pentru Top (maxim 2)
+            if (item.category.id === CATEGORY_IDS.Top) {
+                const tops = prevItems.filter(i => i.category.id === CATEGORY_IDS.Top);
+
+                if (tops.length < 2) {
+                    return [...prevItems, item]; // Adaugă Top-ul dacă sunt mai puțin de 2
+                }
+
+                return [...tops.slice(1), item, ...prevItems.filter(i => i.category.id !== CATEGORY_IDS.Top)]; // Înlocuiește doar unul, păstrând restul outfitului
+            }
+
+            // Gestionăm Hat, Pants și Shoes (doar unul per categorie, fără să șteargă restul)
+            return [...prevItems.filter(i => i.category.id !== item.category.id), item];
+        });
     };
+
+
 
     const saveOutfit = async () => {
         if (selectedItems.length === 0) {
@@ -80,7 +106,8 @@ const OutfitBuilderScreen = () => {
         try {
             await apiClient.post(API_URLS.CREATE_OUTFIT, newOutfit);
             Alert.alert("Success", "Outfit saved successfully!");
-            setSelectedItems([]);
+            //setSelectedItems([]);
+            navigation.navigate("UserOutfits");
         } catch (error) {
             console.error("❌ Error saving outfit:", error);
             Alert.alert("Error", "Failed to save outfit.");
@@ -134,18 +161,41 @@ const OutfitBuilderScreen = () => {
                     placeholderTextColor="#888"
                 />
                 <Animated.View style={[styles.outfitListContainer, outfitListScale]}>
-                    <DraggableFlatList
-                        data={selectedItems}
-                        keyExtractor={(item) => item.id.toString()}
-                        onDragEnd={({ data }) => setSelectedItems(data)}
-                        renderItem={({ item, drag }) => (
-                            <View style={styles.outfitItemContainer}>
-                                <TouchableOpacity onLongPress={drag} style={styles.outfitItem}>
-                                    <Image source={{ uri: item.imageUrl }} style={styles.image} />
-                                </TouchableOpacity>
-                            </View>
+                    <FlatList
+                        data={CATEGORY_ORDER.flatMap(category =>
+                            category === "Top"
+                                ? [selectedItems.filter(item => item.category.id === CATEGORY_IDS[category])] // Afișează ca un array
+                                : selectedItems.filter(item => item.category.id === CATEGORY_IDS[category])
                         )}
+                        keyExtractor={(item, index) => (Array.isArray(item) ? `top-group-${index}` : item.id.toString())}
+                        renderItem={({ item }) => {
+                            const isHatOrShoes = !Array.isArray(item) && (item.category.id === CATEGORY_IDS.Hat || item.category.id === CATEGORY_IDS.Shoes);
+                            const imageStyle = isHatOrShoes
+                                ? { width: styles.image.width * 0.5, height: styles.image.height * 0.5 } // Reducere 50% pentru Hat și Shoes
+                                : styles.image;
+
+                            return (
+                                Array.isArray(item) ? (
+                                    <View style={{ flexDirection: "row", justifyContent: "center" }}>
+                                        {item.map((topItem) => (
+                                            <TouchableOpacity key={topItem.id} style={styles.outfitItem}>
+                                                <Image source={{ uri: topItem.imageUrl }} style={styles.image} />
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                ) : (
+                                    <View style={styles.outfitItemContainer}>
+                                        <TouchableOpacity style={styles.outfitItem}>
+                                            <Image source={{ uri: item.imageUrl }} style={imageStyle} />
+                                        </TouchableOpacity>
+                                    </View>
+                                )
+                            );
+                        }}
                     />
+
+
+
                 </Animated.View>
             </View>
 
@@ -161,11 +211,11 @@ const OutfitBuilderScreen = () => {
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
                     nestedScrollEnabled={true} // ✅ Allows scrolling inside a nested list
                 >
-                    {sections.map((section) => (
-                        <View key={section.title} style={styles.sectionContainer}>
-                            <Text style={styles.sectionHeader}>{section.title}</Text>
+                    {CATEGORY_ORDER.map(category => (
+                        <View key={category} style={styles.sectionContainer}>
+                            <Text style={styles.sectionHeader}>{category}</Text>
                             <FlatList
-                                data={section.data}
+                                data={wardrobe.filter(item => item.category.id === CATEGORY_IDS[category])}
                                 keyExtractor={(item) => item.id.toString()}
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
@@ -191,6 +241,7 @@ const OutfitBuilderScreen = () => {
                 </ScrollView>
             </Animated.View>
         </SafeAreaView>
+
     );
 };
 
@@ -228,9 +279,9 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
     },
     input: {
-        width: "80%",
-        padding: 12,
-        marginBottom: 15,
+        width: "50%",
+        padding: 8,
+        marginBottom: 5,
         borderWidth: 1,
         borderColor: "#444",
         borderRadius: 8,

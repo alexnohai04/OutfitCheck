@@ -4,22 +4,54 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 
-const openCamera = async (navigation) => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-        Alert.alert("Permission Required", "You must grant camera access to use this feature.");
-        return;
-    }
+const handleScanArticle = async (navigation) => {
+    const options = [
+        { text: "Take a Photo", action: "camera" },
+        { text: "Choose from Gallery", action: "gallery" },
+        { text: "Cancel", action: "cancel" }
+    ];
 
-    const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 1,
-    });
+    Alert.alert("Select Image Source", "Choose an option:", [
+        {
+            text: options[0].text,
+            onPress: async () => {
+                const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                if (status !== "granted") {
+                    Alert.alert("Permission Required", "You must grant camera access to use this feature.");
+                    return;
+                }
+                const result = await ImagePicker.launchCameraAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    quality: 1,
+                });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-        console.log("📸 Photo taken:", result.assets[0].uri);
-        navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
-    }
+                if (!result.canceled && result.assets?.length > 0) {
+                    console.log("📸 Photo taken:", result.assets[0].uri);
+                    navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
+                }
+            }
+        },
+        {
+            text: options[1].text,
+            onPress: async () => {
+                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (status !== "granted") {
+                    Alert.alert("Permission Required", "You must grant gallery access to use this feature.");
+                    return;
+                }
+                const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    quality: 1,
+                });
+
+                if (!result.canceled && result.assets?.length > 0) {
+                    console.log("🖼️ Image selected:", result.assets[0].uri);
+                    navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
+                }
+            }
+        },
+        { text: options[2].text, style: "cancel" }
+    ]);
 };
 
 const CameraScreen = () => {
@@ -32,7 +64,7 @@ const CameraScreen = () => {
                 <Text style={styles.panelText}>Post a Social Media Photo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.panel} onPress={() => openCamera(navigation)}>
+            <TouchableOpacity style={styles.panel} onPress={() => handleScanArticle(navigation)}>
                 <Icon name="scan-outline" size={40} color="#FFFFFF" />
                 <Text style={styles.panelText}>Scan Article</Text>
             </TouchableOpacity>
