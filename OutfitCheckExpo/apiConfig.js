@@ -19,11 +19,17 @@ const API_URLS = {
     ADD_CLOTHING: `${API_BASE}/api/clothing/add`,
     GET_CLOTHING_CATEGORIES: `${API_BASE}/api/categories/all`,
     GET_CLOTHING_ITEMS_BY_USER: `${API_BASE}/api/clothing/user`,
+    DELETE_CLOTHING_ITEM: (itemId) => `${API_BASE}/api/clothing/${itemId}`,
+
     GET_USER_PROFILE: `${API_BASE}/users/profile`,
+
+    UPLOAD_PROFILE_PIC: (userId) => `${API_BASE}/users/upload-profile-pic/${userId}`,
+    GET_PROFILE_PIC: (userId) => `${API_BASE}/users/profile-picture/${userId}`,
+
 
     CREATE_OUTFIT: `${API_BASE}/api/outfits/create`,
     GET_OUTFITS_BY_USER: `${API_BASE}/api/outfits/user`,
-    GET_OUTFIT_DETAILS: `${API_BASE}api/outfits`,
+    GET_OUTFIT_DETAILS: `${API_BASE}/api/outfits`,
     DELETE_OUTFIT: (outfitId) => `${API_BASE}/api/outfits/${outfitId}`
 };
 

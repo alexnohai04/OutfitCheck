@@ -128,7 +128,7 @@ const AddClothingItemScreen = () => {
 
                     <Text style={styles.label}>Category:</Text>
                     {loading ? (
-                        <ActivityIndicator size="large" color="#FFFFFF" />
+                        <ActivityIndicator size="large" color="#FF6B6B" />
                     ) : (
                         <DropDownPicker
                             open={open}

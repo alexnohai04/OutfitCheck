@@ -5,13 +5,22 @@ import org.example.outfitcheck.entity.User;
 import org.example.outfitcheck.config.JwtUtil;
 import org.example.outfitcheck.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,7 +31,6 @@ public class UserController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-
 
 
     @Autowired
@@ -68,7 +76,7 @@ public class UserController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-//    @GetMapping("/profile")
+    //    @GetMapping("/profile")
 //    public ResponseEntity<Map<String, String>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
 //        String email = userDetails.getUsername(); // ✅ Spring Security gestionează autenticarea
 //
@@ -79,9 +87,30 @@ public class UserController {
         User user = userService.getUserById(id);
 
         // Convertim User -> UserDTO
-        UserDTO userDTO = new UserDTO(user.getId(), user.getEmail());
+        UserDTO userDTO = new UserDTO(user.getId(), user.getUsername(), user.getEmail(), user.getProfilePicUrl());
 
         return ResponseEntity.ok(userDTO);
     }
 
+    @PostMapping("/upload-profile-pic/{id}")
+    public ResponseEntity<?> uploadProfilePicture(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        try {
+            String imageUrl = userService.uploadProfilePicture(id, file);
+            return ResponseEntity.ok().body(Map.of("imageUrl", imageUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/profile-picture/{id}")
+    public ResponseEntity<Resource> getProfilePicture(@PathVariable Long id) {
+        try {
+            Resource resource = userService.getProfilePicture(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "image/jpeg")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
 }

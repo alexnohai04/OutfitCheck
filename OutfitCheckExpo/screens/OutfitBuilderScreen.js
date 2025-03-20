@@ -1,5 +1,6 @@
 import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
 import {
+    ActivityIndicator,
     Alert,
     Dimensions,
     FlatList,
@@ -25,6 +26,7 @@ const OutfitBuilderScreen = () => {
     const [wardrobe, setWardrobe] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
     const [outfitName, setOutfitName] = useState();
+    const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
     const { userId } = useContext(UserContext);
 
@@ -49,22 +51,13 @@ const OutfitBuilderScreen = () => {
             } catch (error) {
                 console.error("❌ Error loading clothing items:", error);
                 Alert.alert("Error", "Failed to load clothing items.");
+            } finally {
+                setLoading(false); // ✅ Stop loading when done
             }
         };
         fetchClothingItems();
     }, [userId]);
 
-    // const groupedClothing = wardrobe.reduce((acc, item) => {
-    //     const category = item.category.name;
-    //     if (!acc[category]) acc[category] = [];
-    //     acc[category].push(item);
-    //     return acc;
-    // }, {});
-
-    // const sections = Object.keys(groupedClothing).map((category) => ({
-    //     title: category,
-    //     data: groupedClothing[category],
-    // }));
 
     const toggleItemSelection = (item) => {
         setSelectedItems((prevItems) => {
@@ -150,6 +143,13 @@ const OutfitBuilderScreen = () => {
         });
     }, []);
 
+    if (loading) {
+        return (
+            <View style={globalStyles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FF6B6B" />
+            </View>
+        );
+    }
     return (
         <SafeAreaView style={styles.safeContainer}>
             <View style={styles.outfitContainer}>
