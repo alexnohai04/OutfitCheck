@@ -1,54 +1,48 @@
-package org.example.outfitcheck.config;//package org.example.outfitcheck.config;
-//
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-//import org.springframework.security.web.SecurityFilterChain;
-//
-//@Configuration
-//public class SecurityConfig {
-//
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http
-//                .csrf(csrf -> csrf.disable()) // ⚠️ Dezactivăm protecția CSRF pentru testare
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/users/register").permitAll() // ✅ Permitem acces liber la înregistrare
-//                        .anyRequest().authenticated() // 🔒 Restul endpoint-urilor necesită autentificare
-//                )
-//                .formLogin(form -> form.disable()) // 🚫 Dezactivăm form login-ul
-//                .httpBasic(httpBasic -> httpBasic.disable()); // 🚫 Dezactivăm Basic Auth
-//
-//        return http.build();
-//    }
-//}
+package org.example.outfitcheck.config;
 
+import io.jsonwebtoken.security.Keys;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+//import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.crypto.SecretKey;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(); // ✅ Creează un bean pentru encoder
+    }
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)  // Dezactivează CSRF (opțional)
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Permite accesul la toate endpoint-urile
-                );
+                        .requestMatchers("/users/login", "/users/register").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.decoder(jwtDecoder())) // ✅ Setează decoder-ul JWT
+                )
+                .formLogin(AbstractHttpConfigurer::disable) // ✅ Dezactivează autentificarea clasică
+                .httpBasic(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public JwtDecoder jwtDecoder() {
+        SecretKey secretKey = Keys.hmacShaKeyFor("12345678901234567890123456789012".getBytes());
+        return NimbusJwtDecoder.withSecretKey(secretKey).build();
     }
 }

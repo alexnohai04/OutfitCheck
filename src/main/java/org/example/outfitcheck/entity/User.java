@@ -1,5 +1,6 @@
 package org.example.outfitcheck.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -16,11 +17,18 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = true)
+    private String profilePicUrl;
 
     @Column(nullable = false)
     private String password;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClothingItem> clothingItems;
 }

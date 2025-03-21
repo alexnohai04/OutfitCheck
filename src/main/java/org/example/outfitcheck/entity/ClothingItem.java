@@ -1,5 +1,7 @@
 package org.example.outfitcheck.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,19 +16,20 @@ public class ClothingItem {
     @SequenceGenerator(name = "clothing_seq", sequenceName = "clothing_sequence", allocationSize = 1)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;  // Ex: "Blue T-Shirt"
+//    @Column(nullable = false)
+//    private String name;  // Ex: "Blue T-Shirt"
 
     private String color;  // Ex: "Blue"
     private String material;  // Ex: "Cotton"
 
     private String imageUrl;  // URL către imaginea scanată
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
-    private ClothingCategory category; // Legătură cu tabela de categorii
+    private ClothingCategory category;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
-    private User owner;  // Haina aparține unui utilizator
+    @JsonBackReference  // 🚀 Permite serializarea `owner`, dar evită recursivitatea
+    private User owner;
 }
