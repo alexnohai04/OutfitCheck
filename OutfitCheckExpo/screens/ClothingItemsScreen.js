@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useContext } from "react";
-import { View, Text, FlatList, Image, ActivityIndicator, Alert, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from "react-native";
+import {
+    View,
+    Text,
+    FlatList,
+    Image,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    SafeAreaView,
+    TouchableOpacity,
+    ScrollView
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import API_URLS from "../apiConfig";
 import { UserContext } from "../UserContext";
 import apiClient from "../apiClient";
-import * as FileSystem from "expo-file-system"; // ✅ Importăm FileSystem pentru salvare locală
 import { Swipeable } from "react-native-gesture-handler";
 import globalStyles from "../styles/globalStyles";
+import { processClothingItems } from "../utils/imageUtils";
 
 const ClothingItemsScreen = () => {
     const navigation = useNavigation();
@@ -27,12 +38,7 @@ const ClothingItemsScreen = () => {
                 const response = await apiClient.get(`${API_URLS.GET_CLOTHING_ITEMS_BY_USER}/${userId}`);
 
                 if (response.status === 200) {
-                    const updatedItems = await Promise.all(
-                        response.data.map(async (item) => {
-                            const localUri = await getLocalImageUri(item.imageUrl);
-                            return { ...item, localImageUri: localUri };
-                        })
-                    );
+                    const updatedItems = await processClothingItems(response.data);
                     setClothingItems(updatedItems);
                 } else {
                     Alert.alert("Error", response.data.message || "Could not load clothing items.");
@@ -46,28 +52,6 @@ const ClothingItemsScreen = () => {
 
         fetchClothingItems();
     }, [userId]);
-
-    // ✅ Funcție care verifică dacă imaginea există local sau trebuie descărcată
-    const getLocalImageUri = async (imageUrl) => {
-        const filename = imageUrl.split("/").pop(); // Extragem numele fișierului din URL
-        const localUri = `${FileSystem.documentDirectory}${filename}`;
-
-        const fileInfo = await FileSystem.getInfoAsync(localUri);
-
-        if (fileInfo.exists) {
-            console.log(`✅ Image found locally: ${localUri}`);
-            return localUri;
-        }
-
-        console.log(`⬇️ Downloading image: ${imageUrl}`);
-        try {
-            await FileSystem.downloadAsync(imageUrl, localUri);
-            return localUri;
-        } catch (error) {
-            console.error("❌ Error downloading image:", error);
-            return imageUrl; // Dacă nu reușește, returnăm URL-ul original
-        }
-    };
 
     const deleteClothingItem = async (itemId) => {
         try {
@@ -94,8 +78,8 @@ const ClothingItemsScreen = () => {
         );
     };
 
-    const renderRightActions = (outfitId) => (
-        <TouchableOpacity style={globalStyles.deleteButton} onPress={() => confirmDelete(outfitId)}>
+    const renderRightActions = (itemId) => (
+        <TouchableOpacity style={globalStyles.deleteButton} onPress={() => confirmDelete(itemId)}>
             <Text style={globalStyles.deleteText}>Delete</Text>
         </TouchableOpacity>
     );
@@ -103,7 +87,13 @@ const ClothingItemsScreen = () => {
     const renderItem = ({ item }) => (
         <Swipeable renderRightActions={() => renderRightActions(item.id)}>
             <View style={styles.itemContainer}>
-                <Image source={{ uri: item.localImageUri }} style={styles.image} />
+                {item.base64Image ? (
+                    <Image source={{ uri: item.base64Image }} style={styles.image} />
+                ) : (
+                    <View style={styles.imagePlaceholder}>
+                        <Text style={styles.imagePlaceholderText}>No Image</Text>
+                    </View>
+                )}
                 <View style={styles.infoContainer}>
                     <Text style={styles.itemText}>Color: {item.color}</Text>
                     <Text style={styles.itemText}>Material: {item.material}</Text>
@@ -167,7 +157,6 @@ const ClothingItemsScreen = () => {
     );
 };
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -182,12 +171,12 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     buttonsContainer: {
-        height: 50, // Fixăm înălțimea pentru a preveni probleme de layout
+        height: 50,
         marginBottom: 10,
     },
     categoryScroll: {
         flexGrow: 0,
-        padding:5
+        padding: 5
     },
     categoryButton: {
         minWidth: 80,
@@ -207,8 +196,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     listContainer: {
-        flex: 1, // Face ca lista să ocupe tot spațiul rămas
-
+        flex: 1,
     },
     noItemsText: {
         fontSize: 18,
@@ -222,7 +210,7 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         marginVertical: 5,
-        marginHorizontal:15,
+        marginHorizontal: 15,
         alignItems: "center",
     },
     image: {
@@ -230,6 +218,19 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 10,
         marginRight: 15,
+    },
+    imagePlaceholder: {
+        width: 80,
+        height: 80,
+        borderRadius: 10,
+        marginRight: 15,
+        backgroundColor: "#444",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    imagePlaceholderText: {
+        color: "#A0A0A0",
+        fontSize: 14,
     },
     infoContainer: {
         flex: 1,
@@ -239,8 +240,6 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         marginBottom: 5,
     },
-
-
 });
 
 export default ClothingItemsScreen;

@@ -7,6 +7,7 @@ import globalStyles from '../styles/globalStyles';
 import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import { Swipeable } from 'react-native-gesture-handler';
+import { processClothingItems } from "../utils/imageUtils";
 
 const UserOutfitsScreen = () => {
     const [outfits, setOutfits] = useState([]);
@@ -22,7 +23,11 @@ const UserOutfitsScreen = () => {
                 console.log("📥 API Response:", response);
 
                 if (response.status === 200) {
-                    setOutfits(response.data);
+                    const updatedOutfits = await Promise.all(response.data.map(async (outfit) => {
+                        const processedItems = await processClothingItems(outfit.clothingItems);
+                        return { ...outfit, clothingItems: processedItems };
+                    }));
+                    setOutfits(updatedOutfits);
                 } else {
                     Alert.alert("Error", response.data.message || "Could not load clothing items.");
                 }
@@ -78,8 +83,8 @@ const UserOutfitsScreen = () => {
                         keyExtractor={(clothingItem) => clothingItem.id?.toString() || Math.random().toString()}
                         horizontal
                         renderItem={({ item: clothingItem }) => (
-                            clothingItem.imageUrl ? (
-                                <Image source={{ uri: clothingItem.imageUrl.replace('file://', '') }} style={styles.outfitImage} />
+                            clothingItem.base64Image ? (
+                                <Image source={{ uri: clothingItem.base64Image }} style={styles.outfitImage} />
                             ) : null
                         )}
                     />

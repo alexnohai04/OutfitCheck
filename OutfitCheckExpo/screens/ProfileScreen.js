@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -22,6 +22,7 @@ const arrayBufferToBase64 = (buffer) => {
 const ProfileScreen = () => {
     const [user, setUser] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
+    const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
     const { userId, logoutUser } = useContext(UserContext);
 
@@ -39,25 +40,26 @@ const ProfileScreen = () => {
                     });
 
                     // 🔹 Convertim `arraybuffer` în `base64`
-                    const base64String = `data:image/jpeg;base64,${arrayBufferToBase64(imageResponse.data)}`;
+                    const base64String = `data:image/webp;base64,${arrayBufferToBase64(imageResponse.data)}`;
                     setProfileImage(base64String);
                     console.log("Profile image loaded.");
                 } catch (imageError) {
                     if (imageError.response && imageError.response.status === 404) {
                         console.log("No profile image found, using default icon.");
-                        setProfileImage(null); // 🔹 Setăm `null` pentru a afișa iconița default
+                        setProfileImage(null); // 🔹 Setăm `null` pentru iconița default
                     } else {
                         console.error("Error loading profile image:", imageError);
                     }
                 }
             } catch (error) {
                 console.error("Error loading user data:", error.response?.data || error.message);
+            } finally {
+                setLoading(false); // 🔹 Setăm `loading` la `false` după finalizarea încărcării
             }
         };
 
         fetchUserData();
     }, []);
-
 
     const handleLogout = async () => {
         try {
@@ -76,8 +78,8 @@ const ProfileScreen = () => {
             let formData = new FormData();
             formData.append("file", {
                 uri: fileUri,
-                name: "profile.jpg",
-                type: "image/jpeg",
+                name: "profile.webp",
+                type: "image/webp",
             });
 
             const response = await apiClient.post(API_URLS.UPLOAD_PROFILE_PIC(userId), formData, {
@@ -92,7 +94,7 @@ const ProfileScreen = () => {
                     responseType: "arraybuffer",
                 });
 
-                const newBase64String = `data:image/jpeg;base64,${arrayBufferToBase64(newImageResponse.data)}`;
+                const newBase64String = `data:image/webp;base64,${arrayBufferToBase64(newImageResponse.data)}`;
                 setProfileImage(newBase64String);
             } else {
                 Alert.alert("Error", "Failed to upload image.");
@@ -102,7 +104,6 @@ const ProfileScreen = () => {
             Alert.alert("Error", "Something went wrong.");
         }
     };
-
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -117,17 +118,17 @@ const ProfileScreen = () => {
             const resizedImage = await ImageManipulator.manipulateAsync(
                 result.assets[0].uri,
                 [{ resize: { width: 512, height: 512 } }], // 📌 Setăm dimensiunea optimă pentru imaginea de profil
-                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // 📌 Reducem calitatea la 70%
+                { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP } // 📌 Reducem calitatea la 70%
             );
 
             uploadProfilePicture(resizedImage.uri);
         }
     };
 
-    if (!user) {
+    if (loading) {
         return (
             <View style={globalStyles.container}>
-                <Text style={globalStyles.loadingText}>Loading...</Text>
+                <ActivityIndicator size="large" color="#FF6B6B" />
             </View>
         );
     }
@@ -139,7 +140,7 @@ const ProfileScreen = () => {
                 {profileImage ? (
                     <Image source={{ uri: profileImage }} style={globalStyles.profileImage} />
                 ) : (
-                    <Feather name="user" size={50} color="#FFFFFF" />
+                    <Feather name="user" size={50} color="#FFFFFF" /> // 🔹 Păstrăm iconița default
                 )}
             </TouchableOpacity>
 

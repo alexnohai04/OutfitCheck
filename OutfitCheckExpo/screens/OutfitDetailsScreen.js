@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import globalStyles from "../styles/globalStyles";
 import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
+import { processClothingItems } from "../utils/imageUtils";
 
 const CATEGORY_ORDER = ["Hat", "Top", "Pants", "Shoes"];
 const CATEGORY_IDS = {
@@ -35,7 +36,8 @@ const OutfitDetailsScreen = () => {
                 console.log("✅ API Response:", response.data);
 
                 if (response.status === 200 && response.data) {
-                    setOutfit(response.data);
+                    const processedItems = await processClothingItems(response.data.clothingItems);
+                    setOutfit({ ...response.data, clothingItems: processedItems });
                 } else {
                     Alert.alert("Error", "Failed to load outfit details.");
                 }
@@ -88,14 +90,14 @@ const OutfitDetailsScreen = () => {
                         <View style={{ flexDirection: "row", justifyContent: "center" }}>
                             {item.map((topItem) => (
                                 <View key={topItem.id} style={styles.outfitItem}>
-                                    <Image source={{ uri: topItem.imageUrl?.replace("file://", "") }} style={styles.image} />
+                                    <Image source={{ uri: topItem.base64Image }} style={styles.image} />
                                 </View>
                             ))}
                         </View>
                     ) : (
                         <View style={styles.outfitItemContainer}>
                             <View style={styles.outfitItem}>
-                                <Image source={{ uri: item.imageUrl?.replace("file://", "") }} style={imageStyle} />
+                                <Image source={{ uri: item.base64Image }} style={imageStyle} />
                             </View>
                         </View>
                     );

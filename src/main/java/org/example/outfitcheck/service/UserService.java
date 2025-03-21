@@ -53,8 +53,8 @@ public class UserService {
             }
 
             // Creează folderul dacă nu există
-            String fileName = "profile_" + id + ".jpg";
-            Path uploadPath = Paths.get("uploads");
+            String fileName = "profile_" + id + ".webp";
+            Path uploadPath = Paths.get("uploads/profile");
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
@@ -62,7 +62,7 @@ public class UserService {
             Files.write(filePath, file.getBytes());
 
             // NU folosim un IP fix, doar calea relativă
-            String imageUrl = "/uploads/" + fileName;
+            String imageUrl = "/uploads/profile" + fileName;
 
             // Actualizăm user-ul cu noua imagine
             updateProfilePicture(id, imageUrl);
@@ -75,7 +75,7 @@ public class UserService {
 
     public Resource getProfilePicture(Long id) {
         try {
-            Path filePath = Paths.get("uploads").resolve("profile_" + id + ".jpg").normalize();
+            Path filePath = Paths.get("uploads/profile").resolve("profile_" + id + ".webp").normalize();
             Resource resource = new UrlResource(filePath.toUri());
 
             if (!resource.exists() || !resource.isReadable()) {

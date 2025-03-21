@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import * as ImageManipulator from "expo-image-manipulator";
 import API_URLS from "../apiConfig";
 import { UserContext } from "../UserContext";
 import apiClient from "../apiClient";
@@ -65,18 +66,48 @@ const AddClothingItemScreen = () => {
 
         setLoading(true);
 
-        const clothingItem = {
-            imageUrl: imageUri,
-            color,
-            material,
-            categoryId: category,
-            userId: userId
-        };
-
-        console.log("📦 Request sent to backend:", JSON.stringify(clothingItem));
-
         try {
-            const response = await apiClient.post(API_URLS.ADD_CLOTHING, clothingItem);
+            // 🔹 Obține dimensiunile imaginii originale
+            const original = await ImageManipulator.manipulateAsync(imageUri, []);
+            const { width, height } = original;
+
+            // 🔹 Determină dimensiunea pătrată maximă și zona de crop centrată
+            const size = Math.min(width, height);
+            const cropRegion = {
+                originX: (width - size) / 2,
+                originY: (height - size) / 2,
+                width: size,
+                height: size
+            };
+
+            // 🔹 Crop centrat + resize la 1080x1080
+            const squareImage = await ImageManipulator.manipulateAsync(
+                imageUri,
+                [
+                    { crop: cropRegion },
+                    { resize: { width: 1080, height: 1080 } }
+                ],
+                { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP }
+            );
+
+            let formData = new FormData();
+            formData.append("userId", userId);
+            formData.append("categoryId", category);
+            formData.append("color", color);
+            formData.append("material", material);
+            formData.append("file", {
+                uri: squareImage.uri,
+                name: "clothing.webp",
+                type: "image/webp",
+            });
+
+            console.log("📦 Sending cropped & resized image to backend:", formData);
+
+            const response = await apiClient.post(API_URLS.ADD_CLOTHING, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
 
             if (response.status === 201 || response.status === 200) {
                 Alert.alert("Success", "Clothing item saved successfully!");

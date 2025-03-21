@@ -5,6 +5,7 @@ import org.example.outfitcheck.entity.ClothingItem;
 import org.example.outfitcheck.service.ClothingItemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,11 +19,16 @@ public class ClothingItemController {
         this.clothingItemService = clothingItemService;
     }
 
-    // 🔹 1. Adăugare haină nouă
+    // 🔹 1. Adăugare haină nouă cu imagine
     @PostMapping("/add")
-    public ResponseEntity<?> addClothingItem(@RequestBody ClothingItemRequest request) {
+    public ResponseEntity<?> addClothingItem(
+            @RequestParam("userId") Long userId,
+            @RequestParam("categoryId") Long categoryId,
+            @RequestParam("color") String color,
+            @RequestParam("material") String material,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
-            ClothingItem savedItem = clothingItemService.addClothingItem(request);
+            ClothingItem savedItem = clothingItemService.addClothingItem(userId, categoryId, color, material, file);
             return ResponseEntity.ok(savedItem);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -36,7 +42,7 @@ public class ClothingItemController {
         return ResponseEntity.ok(items);
     }
 
-    // 🔹 3. Obținerea unui articol vestimentar după ID
+    // 🔹 3. Obținerea unui articol vestimentar cu imaginea sa
     @GetMapping("/{id}")
     public ResponseEntity<ClothingItem> getClothingItemById(@PathVariable Long id) {
         Optional<ClothingItem> item = clothingItemService.getClothingItemById(id);

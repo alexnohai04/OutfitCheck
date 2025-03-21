@@ -107,7 +107,7 @@ public class UserController {
         try {
             Resource resource = userService.getProfilePicture(id);
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_TYPE, "image/jpeg")
+                    .header(HttpHeaders.CONTENT_TYPE, "image/webp")
                     .body(resource);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);

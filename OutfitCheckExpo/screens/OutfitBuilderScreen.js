@@ -19,9 +19,18 @@ import API_URLS from "../apiConfig";
 import globalStyles from "../styles/globalStyles";
 import {UserContext} from "../UserContext";
 import { useNavigation } from '@react-navigation/native';
+import base64 from "react-native-base64";
 
 const { height } = Dimensions.get("window");
 
+const arrayBufferToBase64 = (buffer) => {
+    let binary = "";
+    let bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return base64.encode(binary);
+};
 const OutfitBuilderScreen = () => {
     const [wardrobe, setWardrobe] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
@@ -46,18 +55,38 @@ const OutfitBuilderScreen = () => {
         const fetchClothingItems = async () => {
             try {
                 const response = await apiClient.get(`${API_URLS.GET_CLOTHING_ITEMS_BY_USER}/${userId}`);
-                console.log("📥 Clothing items received:", response.data);
-                setWardrobe(response.data);
+
+                if (response.status === 200) {
+                    const updatedItems = await Promise.all(
+                        response.data.map(async (item) => {
+                            let base64Image = null;
+                            if (item.imageUrl) {
+                                try {
+                                    const imageResponse = await apiClient.get(item.imageUrl, {
+                                        responseType: "arraybuffer",
+                                    });
+                                    base64Image = `data:image/webp;base64,${arrayBufferToBase64(imageResponse.data)}`;
+                                } catch (imageError) {
+                                    console.error(`Error loading image for item ${item.id}:`, imageError);
+                                }
+                            }
+                            return { ...item, base64Image };
+                        })
+                    );
+                    setWardrobe(updatedItems);
+                } else {
+                    Alert.alert("Error", "Failed to load clothing items.");
+                }
             } catch (error) {
                 console.error("❌ Error loading clothing items:", error);
                 Alert.alert("Error", "Failed to load clothing items.");
             } finally {
-                setLoading(false); // ✅ Stop loading when done
+                setLoading(false);
             }
         };
+
         fetchClothingItems();
     }, [userId]);
-
 
     const toggleItemSelection = (item) => {
         setSelectedItems((prevItems) => {
@@ -179,14 +208,14 @@ const OutfitBuilderScreen = () => {
                                     <View style={{ flexDirection: "row", justifyContent: "center" }}>
                                         {item.map((topItem) => (
                                             <TouchableOpacity key={topItem.id} style={styles.outfitItem}>
-                                                <Image source={{ uri: topItem.imageUrl }} style={styles.image} />
+                                                <Image source={{ uri: topItem.base64Image }} style={styles.image} />
                                             </TouchableOpacity>
                                         ))}
                                     </View>
                                 ) : (
                                     <View style={styles.outfitItemContainer}>
                                         <TouchableOpacity style={styles.outfitItem}>
-                                            <Image source={{ uri: item.imageUrl }} style={imageStyle} />
+                                            <Image source={{ uri: item.base64Image }} style={imageStyle} />
                                         </TouchableOpacity>
                                     </View>
                                 )
@@ -227,7 +256,7 @@ const OutfitBuilderScreen = () => {
                                             selectedItems.some((i) => i.id === item.id) && styles.selectedItem,
                                         ]}
                                     >
-                                        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+                                        <Image source={{ uri: item.base64Image }} style={styles.image} />
                                     </TouchableOpacity>
                                 )}
                             />
