@@ -1,7 +1,6 @@
 package org.example.outfitcheck.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,9 +14,6 @@ public class ClothingItem {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "clothing_seq")
     @SequenceGenerator(name = "clothing_seq", sequenceName = "clothing_sequence", allocationSize = 1)
     private Long id;
-
-//    @Column(nullable = false)
-//    private String name;  // Ex: "Blue T-Shirt"
 
     private String color;  // Ex: "Blue"
     private String material;  // Ex: "Cotton"
