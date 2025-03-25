@@ -30,7 +30,12 @@ const API_URLS = {
     CREATE_OUTFIT: `${API_BASE}/api/outfits/create`,
     GET_OUTFITS_BY_USER: `${API_BASE}/api/outfits/user`,
     GET_OUTFIT_DETAILS: `${API_BASE}/api/outfits`,
-    DELETE_OUTFIT: (outfitId) => `${API_BASE}/api/outfits/${outfitId}`
+    DELETE_OUTFIT: (outfitId) => `${API_BASE}/api/outfits/${outfitId}`,
+
+    GET_LOGGED_OUTFITS_BY_USER: `${API_BASE}/api/logged-outfits/by-user`,
+    LOG_OUTFIT: `${API_BASE}/api/logged-outfits`,
+    DELETE_LOGGED_OUTFIT: (userId, date) => `${API_BASE}/api/logged-outfits/${userId}/${date}`,
+
 };
 
 export default API_URLS;

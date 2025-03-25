@@ -4,19 +4,12 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/Ionicons";
 import ProfileScreen from "../screens/ProfileScreen";
 import CameraScreen from "./CameraScreen";
+import CalendarScreen from "../screens/CalendarScreen";
 import globalStyles from "../styles/globalStyles";
 
 const Tab = createBottomTabNavigator();
 
-const CalendarScreen = () => (
-    <View style={globalStyles.screen}>
-        <Text style={globalStyles.text}>Calendar Screen</Text>
-    </View>
-);
-
 const AppTabs = () => {
-
-
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
