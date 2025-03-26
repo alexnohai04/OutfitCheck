@@ -26,7 +26,7 @@ const handleScanArticle = async (navigation) => {
                 });
 
                 if (!result.canceled && result.assets?.length > 0) {
-                    console.log("📸 Photo taken:", result.assets[0].uri);
+                    console.log("📸 Clothing photo taken:", result.assets[0].uri);
                     navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
                 }
             }
@@ -45,7 +45,7 @@ const handleScanArticle = async (navigation) => {
                 });
 
                 if (!result.canceled && result.assets?.length > 0) {
-                    console.log("🖼️ Image selected:", result.assets[0].uri);
+                    console.log("🖼️ Clothing image selected:", result.assets[0].uri);
                     navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
                 }
             }
@@ -54,12 +54,34 @@ const handleScanArticle = async (navigation) => {
     ]);
 };
 
+const handleCreatePost = async (navigation) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+        Alert.alert("Permission Required", "You must grant gallery access to use this feature.");
+        return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+    });
+
+
+    if (!result.canceled && result.assets?.length > 0) {
+        console.log("🖼️ Post image selected:", result.assets[0].uri);
+        navigation.navigate("AddPost", { imageUri: result.assets[0].uri });
+    }
+};
+
+
 const CameraScreen = () => {
     const navigation = useNavigation();
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.panel} onPress={() => Alert.alert("In Progress", "This feature is coming soon!")}>
+            <TouchableOpacity style={styles.panel} onPress={() => handleCreatePost(navigation)}>
                 <Icon name="image-outline" size={40} color="#FFFFFF" />
                 <Text style={styles.panelText}>Post a Social Media Photo</Text>
             </TouchableOpacity>

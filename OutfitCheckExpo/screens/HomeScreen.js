@@ -6,6 +6,8 @@ import ProfileScreen from "../screens/ProfileScreen";
 import CameraScreen from "./CameraScreen";
 import CalendarScreen from "../screens/CalendarScreen";
 import globalStyles from "../styles/globalStyles";
+import PostFeedScreen from "../screens/PostFeedScreen";
+
 
 const Tab = createBottomTabNavigator();
 
@@ -15,7 +17,9 @@ const AppTabs = () => {
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ color, size }) => {
                     let iconName;
-                    if (route.name === "Calendar") {
+                    if (route.name === "Feed") {
+                        iconName = "home";
+                    } else if (route.name === "Calendar") {
                         iconName = "calendar";
                     } else if (route.name === "Camera") {
                         iconName = "camera";
@@ -31,6 +35,7 @@ const AppTabs = () => {
             })}
         >
             <Tab.Screen name="Calendar" component={CalendarScreen} />
+            <Tab.Screen name="Feed" component={PostFeedScreen} />
             <Tab.Screen name="Camera" component={CameraScreen} />
             <Tab.Screen name="Profile" component={ProfileScreen}/>
         </Tab.Navigator>

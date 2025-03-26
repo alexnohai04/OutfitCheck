@@ -69,6 +69,10 @@ const CalendarScreen = () => {
     };
 
     useEffect(() => {
+        if (!userId) {
+            console.log("🔒 Skipping profile fetch: user not logged in.");
+            return;
+        }
         const fetchOutfits = async () => {
             try {
                 const res = await apiClient.get(`${API_URLS.GET_LOGGED_OUTFITS_BY_USER}/${userId}`);
@@ -118,7 +122,7 @@ const CalendarScreen = () => {
 
     const handleLogOutfit = () => {
         closeModal();
-        navigation.navigate('SelectOutfitForDate', {
+        navigation.navigate('SelectOutfit', {
             date: selectedDate,
             onGoBack: (date, data) => {
                 setOutfitsByDate(prev => ({
@@ -177,8 +181,8 @@ const CalendarScreen = () => {
     };
 
     const renderRightActions = () => (
-        <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
-            <Text style={styles.deleteText}>Delete</Text>
+        <TouchableOpacity style={globalStyles.deleteButton} onPress={confirmDelete}>
+            <Text style={globalStyles.deleteText}>Delete</Text>
         </TouchableOpacity>
     );
 
@@ -231,7 +235,7 @@ const CalendarScreen = () => {
                                 loadingImages ? (
                                     <ActivityIndicator size="large" color="#FF6B6B" style={{ marginVertical: 12 }} />
                                 ) : (
-                                    <View style={{ width: '100%', paddingHorizontal: 24, marginTop: 12 }}>
+                                    <View style={{ width: '100%', paddingHorizontal: 24, margin: 10 }}>
                                         <Swipeable renderRightActions={renderRightActions}>
                                             <OutfitPreview clothingItems={selectedOutfitImages} />
                                         </Swipeable>
@@ -258,7 +262,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#2C2C2C',
-        marginBottom: 57,
+        marginBottom: 70,
     },
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -284,18 +288,6 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         marginVertical: 4,
-    },
-    deleteButton: {
-        backgroundColor: '#FF6B6B',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: 80,
-        borderTopRightRadius: 12,
-        borderBottomRightRadius: 12,
-    },
-    deleteText: {
-        color: '#fff',
-        fontWeight: 'bold',
     },
 });
 

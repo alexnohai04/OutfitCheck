@@ -8,16 +8,8 @@ import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import { UserContext } from "../UserContext";
 import globalStyles from "../styles/globalStyles";
-import base64 from "react-native-base64";
-
-const arrayBufferToBase64 = (buffer) => {
-    let binary = "";
-    let bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return base64.encode(binary);
-};
+import Toast from 'react-native-toast-message';
+import { fetchProfileImageBase64 } from "../utils/imageUtils";
 
 const ProfileScreen = () => {
     const [user, setUser] = useState(null);
@@ -26,48 +18,45 @@ const ProfileScreen = () => {
     const navigation = useNavigation();
     const { userId, logoutUser } = useContext(UserContext);
 
+    const fetchUserData = async () => {
+        if (!userId) return;
+
+        try {
+            const response = await apiClient.get(`${API_URLS.GET_USER_PROFILE}/${userId}`);
+            setUser(response.data);
+
+            const base64Image = await fetchProfileImageBase64(userId);
+            setProfileImage(base64Image);
+
+        } catch (error) {
+            console.error("❌ Error loading user data:", error.response?.data || error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                // 🔹 Obținem datele utilizatorului
-                const response = await apiClient.get(`${API_URLS.GET_USER_PROFILE}/${userId}`);
-                setUser(response.data);
-
-                // 🔹 Încercăm să obținem imaginea de profil
-                try {
-                    const imageResponse = await apiClient.get(API_URLS.GET_PROFILE_PIC(userId), {
-                        responseType: "arraybuffer",
-                    });
-
-                    // 🔹 Convertim `arraybuffer` în `base64`
-                    const base64String = `data:image/webp;base64,${arrayBufferToBase64(imageResponse.data)}`;
-                    setProfileImage(base64String);
-                    console.log("Profile image loaded.");
-                } catch (imageError) {
-                    if (imageError.response && imageError.response.status === 404) {
-                        console.log("No profile image found, using default icon.");
-                        setProfileImage(null); // 🔹 Setăm `null` pentru iconița default
-                    } else {
-                        console.error("Error loading profile image:", imageError);
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading user data:", error.response?.data || error.message);
-            } finally {
-                setLoading(false); // 🔹 Setăm `loading` la `false` după finalizarea încărcării
-            }
-        };
-
         fetchUserData();
-    }, []);
+    }, [userId]);
 
     const handleLogout = async () => {
         try {
             await logoutUser();
-            navigation.reset({
-                index: 0,
-                routes: [{ name: "Welcome" }],
+
+            Toast.show({
+                type: 'success',
+                text1: 'Logged out',
+                text2: 'You have been logged out successfully.',
+                position: 'top',
             });
+
+            setTimeout(() => {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Welcome" }],
+                });
+            }, 300);
+
         } catch (error) {
             console.error("Error during logout:", error);
         }
@@ -89,13 +78,7 @@ const ProfileScreen = () => {
             });
 
             if (response.status === 200) {
-                // 🔹 După upload, reîncarcăm imaginea
-                const newImageResponse = await apiClient.get(API_URLS.GET_PROFILE_PIC(userId), {
-                    responseType: "arraybuffer",
-                });
-
-                const newBase64String = `data:image/webp;base64,${arrayBufferToBase64(newImageResponse.data)}`;
-                setProfileImage(newBase64String);
+                fetchUserData(); // 🔁 reîncarcă poza după upload
             } else {
                 Alert.alert("Error", "Failed to upload image.");
             }
@@ -110,15 +93,14 @@ const ProfileScreen = () => {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
-            quality: 1, // Păstrăm calitate maximă înainte de comprimare
+            quality: 1,
         });
 
         if (!result.canceled) {
-            // 🔹 Facem resize la 512x512 pentru a reduce dimensiunea fișierului
             const resizedImage = await ImageManipulator.manipulateAsync(
                 result.assets[0].uri,
-                [{ resize: { width: 512, height: 512 } }], // 📌 Setăm dimensiunea optimă pentru imaginea de profil
-                { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP } // 📌 Reducem calitatea la 70%
+                [{ resize: { width: 512, height: 512 } }],
+                { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP }
             );
 
             uploadProfilePicture(resizedImage.uri);
@@ -135,19 +117,24 @@ const ProfileScreen = () => {
 
     return (
         <View style={globalStyles.profileContainer}>
-            {/* Header profil */}
             <TouchableOpacity onPress={pickImage} style={globalStyles.profileImageContainer}>
                 {profileImage ? (
-                    <Image source={{ uri: profileImage }} style={globalStyles.profileImage} />
+                    <Image
+                        source={{ uri: profileImage }}
+                        style={globalStyles.profileImage}
+                        onError={() => {
+                            setProfileImage(null);
+                            console.log("❌ Failed to load profile image.");
+                        }}
+                    />
                 ) : (
-                    <Feather name="user" size={50} color="#FFFFFF" /> // 🔹 Păstrăm iconița default
+                    <Feather name="user" size={50} color="#FFFFFF" />
                 )}
             </TouchableOpacity>
 
             <Text style={globalStyles.username}>{user.username || "User"}</Text>
             <Text style={globalStyles.email}>{user.email}</Text>
 
-            {/* Butoane acțiuni */}
             <View style={globalStyles.buttonsContainer}>
                 <TouchableOpacity style={globalStyles.iconButton} onPress={() => navigation.navigate("ClothingItems")}>
                     <FontAwesome5 name="tshirt" size={24} color="#FFFFFF" />

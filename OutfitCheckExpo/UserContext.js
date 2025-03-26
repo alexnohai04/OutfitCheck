@@ -1,13 +1,21 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
+import { setLogoutHandler } from './utils/authService'; // ajustează calea după structură
+import Toast from "react-native-toast-message";
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
     const [userId, setUserId] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); // ✅ Prevents UI flicker on startup
+    const [isLoading, setIsLoading] = useState(true);
 
+    // ✅ Setăm handler global pentru logout
+    useEffect(() => {
+        setLogoutHandler(logoutUser);
+    }, []);
+
+    // ✅ Verificăm dacă JWT-ul este valid la pornire
     useEffect(() => {
         const checkTokenValidity = async () => {
             try {
@@ -19,15 +27,12 @@ export const UserProvider = ({ children }) => {
                     return;
                 }
 
-                console.log("📥 Extracted JWT:", token);
                 const decodedToken = jwtDecode(token);
-                console.log("🔍 Decoded Token:", decodedToken);
-
-                // ✅ CHECK IF TOKEN IS EXPIRED
                 const currentTime = Math.floor(Date.now() / 1000);
+
                 if (decodedToken.exp && decodedToken.exp < currentTime) {
                     console.log("⚠️ Token expired. Logging out user...");
-                    await logoutUser();
+                    await logoutUser(true); // send 'true' to indicate forced logout
                     setIsLoading(false);
                     return;
                 }
@@ -40,20 +45,17 @@ export const UserProvider = ({ children }) => {
             } catch (error) {
                 console.error("Error decoding JWT:", error);
             }
-            setIsLoading(false); // ✅ Ensures UI only renders when auth check is complete
+            setIsLoading(false);
         };
 
         checkTokenValidity();
     }, []);
 
-    // 📌 FUNCTION TO LOGIN & SAVE TOKEN
+    // 📌 Login user
     const loginUser = async (token) => {
         try {
             await AsyncStorage.setItem("jwt_token", token);
-            console.log("✅ Token saved:", token);
-
             const decodedToken = jwtDecode(token);
-            console.log("🔍 Decoded Token:", decodedToken);
 
             if (decodedToken.id) {
                 setUserId(decodedToken.id);
@@ -65,11 +67,20 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    // 📌 FUNCTION TO LOGOUT USER & REMOVE TOKEN
-    const logoutUser = async () => {
+    // 📌 Logout user
+    const logoutUser = async (showToast = false) => {
         await AsyncStorage.removeItem("jwt_token");
         setUserId(null);
         console.log("🚪 User logged out.");
+
+        if (showToast) {
+            Toast.show({
+                type: "error",
+                text1: "Session expired",
+                text2: "Please log in again.",
+                position: "top",
+            });
+        }
     };
 
     return (

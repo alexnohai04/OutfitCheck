@@ -1,25 +1,28 @@
-import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     Dimensions,
     FlatList,
     Image,
     PanResponder,
-    SafeAreaView, ScrollView,
+    SafeAreaView,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
 } from "react-native";
-import Animated, {useAnimatedStyle, useSharedValue, withSpring} from "react-native-reanimated";
+import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import { Animated } from "react-native";
 import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import globalStyles from "../styles/globalStyles";
-import {UserContext} from "../UserContext";
-import { useNavigation } from '@react-navigation/native';
+import { UserContext } from "../UserContext";
+import { useNavigation } from "@react-navigation/native";
 import base64 from "react-native-base64";
+import OutfitPreview from "../reusable/OutfitPreview";
+import Toast from "react-native-toast-message";
 
 const { height } = Dimensions.get("window");
 
@@ -31,55 +34,52 @@ const arrayBufferToBase64 = (buffer) => {
     }
     return base64.encode(binary);
 };
+
 const OutfitBuilderScreen = () => {
     const [wardrobe, setWardrobe] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
-    const [outfitName, setOutfitName] = useState();
+    const [outfitName, setOutfitName] = useState("");
     const [loading, setLoading] = useState(true);
+    const [nameError, setNameError] = useState(false);
+
     const navigation = useNavigation();
     const { userId } = useContext(UserContext);
 
-    const panelPosition = useSharedValue(height * 0.5); // 📌 Panel starts at 50% of the screen
+    const panelPosition = useSharedValue(height * 0.5);
     const isDragging = useRef(false);
 
     const CATEGORY_ORDER = ["Hat", "Top", "Pants", "Shoes"];
-    const CATEGORY_IDS = {
-        Hat: 4,
-        Top: 1,
-        Pants: 2,
-        Shoes: 3,
-    };
+    const CATEGORY_IDS = { Hat: 4, Top: 1, Pants: 2, Shoes: 3 };
 
+    const shakeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         const fetchClothingItems = async () => {
             try {
                 const response = await apiClient.get(`${API_URLS.GET_CLOTHING_ITEMS_BY_USER}/${userId}`);
-
-                if (response.status === 200) {
-                    const updatedItems = await Promise.all(
-                        response.data.map(async (item) => {
-                            let base64Image = null;
-                            if (item.imageUrl) {
-                                try {
-                                    const imageResponse = await apiClient.get(item.imageUrl, {
-                                        responseType: "arraybuffer",
-                                    });
-                                    base64Image = `data:image/webp;base64,${arrayBufferToBase64(imageResponse.data)}`;
-                                } catch (imageError) {
-                                    console.error(`Error loading image for item ${item.id}:`, imageError);
-                                }
+                const updatedItems = await Promise.all(
+                    response.data.map(async (item) => {
+                        let base64Image = null;
+                        if (item.imageUrl) {
+                            try {
+                                const imageResponse = await apiClient.get(item.imageUrl, {
+                                    responseType: "arraybuffer",
+                                });
+                                base64Image = `data:image/webp;base64,${arrayBufferToBase64(imageResponse.data)}`;
+                            } catch (imageError) {
+                                console.error(`Error loading image for item ${item.id}:`, imageError);
                             }
-                            return { ...item, base64Image };
-                        })
-                    );
-                    setWardrobe(updatedItems);
-                } else {
-                    Alert.alert("Error", "Failed to load clothing items.");
-                }
+                        }
+                        return { ...item, base64Image };
+                    })
+                );
+                setWardrobe(updatedItems);
             } catch (error) {
-                console.error("❌ Error loading clothing items:", error);
-                Alert.alert("Error", "Failed to load clothing items.");
+                Toast.show({
+                    type: "error",
+                    text1: "Failed to load wardrobe",
+                    text2: "Please try again later.",
+                });
             } finally {
                 setLoading(false);
             }
@@ -90,49 +90,69 @@ const OutfitBuilderScreen = () => {
 
     const toggleItemSelection = (item) => {
         setSelectedItems((prevItems) => {
-            // Dacă articolul este deja selectat, îl elimină
-            if (prevItems.some(i => i.id === item.id)) {
-                return prevItems.filter(i => i.id !== item.id);
+            if (prevItems.some((i) => i.id === item.id)) {
+                return prevItems.filter((i) => i.id !== item.id);
             }
 
-            // Gestionăm cazul pentru Top (maxim 2)
             if (item.category.id === CATEGORY_IDS.Top) {
-                const tops = prevItems.filter(i => i.category.id === CATEGORY_IDS.Top);
-
-                if (tops.length < 2) {
-                    return [...prevItems, item]; // Adaugă Top-ul dacă sunt mai puțin de 2
-                }
-
-                return [...tops.slice(1), item, ...prevItems.filter(i => i.category.id !== CATEGORY_IDS.Top)]; // Înlocuiește doar unul, păstrând restul outfitului
+                const tops = prevItems.filter((i) => i.category.id === CATEGORY_IDS.Top);
+                if (tops.length < 2) return [...prevItems, item];
+                return [...tops.slice(1), item, ...prevItems.filter((i) => i.category.id !== CATEGORY_IDS.Top)];
             }
 
-            // Gestionăm Hat, Pants și Shoes (doar unul per categorie, fără să șteargă restul)
-            return [...prevItems.filter(i => i.category.id !== item.category.id), item];
+            return [...prevItems.filter((i) => i.category.id !== item.category.id), item];
         });
     };
 
-
+    const triggerShake = () => {
+        Animated.sequence([
+            Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: 6, duration: 100, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: -6, duration: 100, useNativeDriver: true }),
+            Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+        ]).start();
+    };
 
     const saveOutfit = async () => {
         if (selectedItems.length === 0) {
-            Alert.alert("Error", "Please select at least one clothing item!");
+            Toast.show({
+                type: "error",
+                text1: "No items selected",
+                text2: "Please select at least one clothing item.",
+                position: "top",
+            });
             return;
         }
 
+        if (!outfitName || outfitName.trim() === "") {
+            setNameError(true);
+            triggerShake();
+            return;
+        }
+
+        setNameError(false);
         const newOutfit = {
-            name: outfitName.trim() !== "" ? outfitName : "Untitled Outfit",
+            name: outfitName.trim(),
             creatorId: userId,
             items: selectedItems.map((i) => i.id),
         };
 
         try {
             await apiClient.post(API_URLS.CREATE_OUTFIT, newOutfit);
-            Alert.alert("Success", "Outfit saved successfully!");
-            //setSelectedItems([]);
+            Toast.show({
+                type: "success",
+                text1: "Outfit saved!",
+                text2: "You can now view it in My Outfits.",
+            });
             navigation.navigate("UserOutfits");
         } catch (error) {
             console.error("❌ Error saving outfit:", error);
-            Alert.alert("Error", "Failed to save outfit.");
+            Toast.show({
+                type: "error",
+                text1: "Failed to save outfit",
+                text2: "Please try again later.",
+            });
         }
     };
 
@@ -141,13 +161,13 @@ const OutfitBuilderScreen = () => {
     }));
 
     const outfitListScale = useAnimatedStyle(() => {
-        const scaleFactor = panelPosition.value > height * 0.6 ? 1.2 : 1.0; // ✅ Expands when panel shrinks
-        const translateY = panelPosition.value > height * 0.6 ? 30 : 0; // ✅ Moves the list downward to prevent overlap
-        const marginTop = panelPosition.value > height * 0.6 ? 40 : 10; // ✅ Ensures extra space above the list
+        const scaleFactor = panelPosition.value > height * 0.6 ? 1.2 : 1.0;
+        const translateY = panelPosition.value > height * 0.6 ? 30 : 0;
+        const marginTop = panelPosition.value > height * 0.6 ? 40 : 10;
 
         return {
             transform: [{ scale: withSpring(scaleFactor) }, { translateY: withSpring(translateY) }],
-            marginTop: withSpring(marginTop), // ✅ Keeps space between list and text
+            marginTop: withSpring(marginTop),
         };
     });
 
@@ -165,7 +185,7 @@ const OutfitBuilderScreen = () => {
                     panelPosition.value = Math.max(height * 0.5, Math.min(height * 0.7, panelPosition.value + gesture.dy));
                 }
             },
-            onPanResponderRelease: (_, gesture) => {
+            onPanResponderRelease: () => {
                 isDragging.current = false;
                 panelPosition.value = panelPosition.value > height * 0.6 ? height * 0.7 : height * 0.5;
             },
@@ -179,66 +199,42 @@ const OutfitBuilderScreen = () => {
             </View>
         );
     }
+
     return (
         <SafeAreaView style={styles.safeContainer}>
             <View style={styles.outfitContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={outfitName}
-                    onChangeText={setOutfitName}
-                    placeholder="Name your outfit..."
-                    placeholderTextColor="#888"
-                />
-                <Animated.View style={[styles.outfitListContainer, outfitListScale]}>
-                    <FlatList
-                        data={CATEGORY_ORDER.flatMap(category =>
-                            category === "Top"
-                                ? [selectedItems.filter(item => item.category.id === CATEGORY_IDS[category])] // Afișează ca un array
-                                : selectedItems.filter(item => item.category.id === CATEGORY_IDS[category])
-                        )}
-                        keyExtractor={(item, index) => (Array.isArray(item) ? `top-group-${index}` : item.id.toString())}
-                        renderItem={({ item }) => {
-                            const isHatOrShoes = !Array.isArray(item) && (item.category.id === CATEGORY_IDS.Hat || item.category.id === CATEGORY_IDS.Shoes);
-                            const imageStyle = isHatOrShoes
-                                ? { width: styles.image.width * 0.5, height: styles.image.height * 0.5 } // Reducere 50% pentru Hat și Shoes
-                                : styles.image;
-
-                            return (
-                                Array.isArray(item) ? (
-                                    <View style={{ flexDirection: "row", justifyContent: "center" }}>
-                                        {item.map((topItem) => (
-                                            <TouchableOpacity key={topItem.id} style={styles.outfitItem}>
-                                                <Image source={{ uri: topItem.base64Image }} style={styles.image} />
-                                            </TouchableOpacity>
-                                        ))}
-                                    </View>
-                                ) : (
-                                    <View style={styles.outfitItemContainer}>
-                                        <TouchableOpacity style={styles.outfitItem}>
-                                            <Image source={{ uri: item.base64Image }} style={imageStyle} />
-                                        </TouchableOpacity>
-                                    </View>
-                                )
-                            );
-                        }}
+                <Animated.View style={[{ transform: [{ translateX: shakeAnim }] }]}>
+                    <TextInput
+                        style={[
+                            styles.input,
+                            nameError && { borderColor: "#ff0000", borderWidth: 1 },
+                        ]}
+                        value={outfitName}
+                        onChangeText={setOutfitName}
+                        placeholder="Name your outfit..."
+                        placeholderTextColor="#888"
                     />
-
-
-
                 </Animated.View>
+
+                {selectedItems.length > 0 && (
+                    <Reanimated.View style={[styles.outfitListContainer, outfitListScale]}>
+                        <OutfitPreview clothingItems={selectedItems} />
+                    </Reanimated.View>
+                )}
+
             </View>
 
-            <Animated.View
+            <Reanimated.View
                 style={[styles.panelContainer, animatedStyle]}
                 {...panResponder.panHandlers}
             >
-                <TouchableOpacity style={styles.panelHandle} onPress={() => (isDragging.current = true)} />
+                <TouchableOpacity style={styles.panelHandle} />
                 <Text style={globalStyles.title}>Select clothing items</Text>
 
                 <ScrollView
                     style={{ flex: 1 }}
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
-                    nestedScrollEnabled={true} // ✅ Allows scrolling inside a nested list
+                    nestedScrollEnabled={true}
                 >
                     {CATEGORY_ORDER.map(category => (
                         <View key={category} style={styles.sectionContainer}>
@@ -263,48 +259,21 @@ const OutfitBuilderScreen = () => {
                         </View>
                     ))}
 
-                    {/* ✅ Ensure Save Button is at the bottom */}
                     <TouchableOpacity style={globalStyles.button} onPress={saveOutfit}>
                         <Text style={globalStyles.buttonText}>Save Outfit</Text>
                     </TouchableOpacity>
                 </ScrollView>
-            </Animated.View>
+            </Reanimated.View>
         </SafeAreaView>
-
     );
 };
 
 const styles = StyleSheet.create({
-    outfitListContainer: {
-        marginTop: 20, // ✅ Ensures space below text
-        flex: 1, // ✅ Prevents layout conflicts
-        justifyContent: "flex-start",
-        alignItems: "center",
-    },
-
-    outfitItemContainer: {
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    outfitItem: {
-        padding: 15,
-        backgroundColor: "#333",
-        borderRadius: 10,
-        alignItems: "center",
-    },
-    itemText: {
-        color: "#FFF",
-        marginTop: 5,
-    },
-
-    safeContainer: {
-        flex: 1,
-        backgroundColor: "#2C2C2C",
-    },
+    safeContainer: { flex: 1, backgroundColor: "#2C2C2C" },
     outfitContainer: {
         flex: 1,
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         paddingVertical: 20,
     },
     input: {
@@ -318,6 +287,14 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         textAlign: "center",
         fontSize: 18,
+
+    },
+    outfitListContainer: {
+        marginTop: 20,
+        flex: 1,
+        justifyContent: "flex-start",
+        alignItems: "center",
+        width: "60%",
     },
     panelContainer: {
         position: "absolute",
@@ -329,9 +306,7 @@ const styles = StyleSheet.create({
         padding: 20,
         flex: 1,
     },
-    sectionContainer: {
-        marginBottom: 10,
-    },
+    sectionContainer: { marginBottom: 10 },
     sectionHeader: {
         fontSize: 20,
         fontWeight: "bold",

@@ -15,3 +15,5 @@ delete from clothing_items;
 UPDATE users
 SET username = CONCAT('user_', id)
 WHERE username IS NULL;
+
+delete from posts;

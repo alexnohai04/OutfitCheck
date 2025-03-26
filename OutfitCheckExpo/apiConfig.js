@@ -36,6 +36,10 @@ const API_URLS = {
     LOG_OUTFIT: `${API_BASE}/api/logged-outfits`,
     DELETE_LOGGED_OUTFIT: (userId, date) => `${API_BASE}/api/logged-outfits/${userId}/${date}`,
 
+    ADD_POST: `${API_BASE}/api/posts`, // POST (multipart/form-data)
+    GET_ALL_POSTS: (currentUserId) => `${API_BASE}/api/posts?currentUserId=${currentUserId}`, // GET
+    TOGGLE_LIKE: (postId, userId) => `${API_BASE}/api/posts/${postId}/like?userId=${userId}`, // POST
+
 };
 
 export default API_URLS;

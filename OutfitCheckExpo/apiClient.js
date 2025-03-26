@@ -1,8 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_URLS from "./apiConfig";
-import {Alert} from "react-native";
-import {UserContext} from "./UserContext";
+import { triggerLogout } from "./utils/authService"; // ✅ adăugat
 
 const getAuthHeader = async () => {
     const token = await AsyncStorage.getItem("jwt_token");
@@ -11,14 +10,17 @@ const getAuthHeader = async () => {
 
 const apiClient = axios.create({
     baseURL: API_URLS.BASE,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
 });
 
 apiClient.interceptors.request.use(
     async (config) => {
         // Excludem `login` și `register` de la adăugarea JWT-ului
-        if (config.url.includes("/users/login") || config.url.includes("/users/register")) {
-            return config; // ✅ Nu adăugăm header-ul Authorization
+        if (
+            config.url.includes("/users/login") ||
+            config.url.includes("/users/register")
+        ) {
+            return config;
         }
 
         const authHeader = await getAuthHeader();
@@ -27,29 +29,20 @@ apiClient.interceptors.request.use(
     },
     (error) => Promise.reject(error)
 );
-// Handle 401 errors (expired or invalid token)
+
+// ✅ Handle 401 errors (expired or invalid token)
 apiClient.interceptors.response.use(
-    (response) => response, // Pass through successful responses
+    (response) => response,
     async (error) => {
         if (error.response?.status === 401) {
-            console.error("🔴 JWT expired or invalid. Logging out...");
+            console.log("🔴 JWT expired or invalid. Logging out...");
 
-            // Remove token from storage
-            await AsyncStorage.removeItem("token");
-            await AsyncStorage.removeItem("userId");
-
-            // Show alert to the user
-            Alert.alert("Session Expired", "Please log in again.", [
-                { text: "OK", onPress: () => {} },
-            ]);
-
-            // Logout user in context
-            const { logoutUser } = UserContext._currentValue;
-            if (logoutUser) {
-                logoutUser();
-            }
+            // ✅ Trigger logout global, fără UserContext
+            triggerLogout();
         }
+
         return Promise.reject(error);
     }
 );
+
 export default apiClient;

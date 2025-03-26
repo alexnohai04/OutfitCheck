@@ -105,12 +105,18 @@ public class UserController {
     @GetMapping("/profile-picture/{id}")
     public ResponseEntity<Resource> getProfilePicture(@PathVariable Long id) {
         try {
-            Resource resource = userService.getProfilePicture(id);
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_TYPE, "image/webp")
-                    .body(resource);
+            Path filePath = Paths.get("uploads/profile").resolve("profile_" + id + ".webp");
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok().body(resource);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+
 }

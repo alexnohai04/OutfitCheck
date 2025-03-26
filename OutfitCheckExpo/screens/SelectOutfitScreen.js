@@ -21,7 +21,7 @@ import Toast from 'react-native-toast-message';
 
 
 
-const SelectOutfitForDateScreen = () => {
+const SelectOutfitScreen = () => {
     const { userId } = useContext(UserContext);
     const navigation = useNavigation();
     const route = useRoute();
@@ -52,6 +52,18 @@ const SelectOutfitForDateScreen = () => {
     }, [userId]);
 
     const handleLogOutfit = async (outfitId) => {
+        const selectedOutfit = outfits.find(o => o.id === outfitId);
+
+        if (!date) {
+            // 👉 Caz: selectare pentru postare
+            if (onGoBack && typeof onGoBack === 'function') {
+                onGoBack(outfitId);
+            }
+            navigation.goBack();
+            return;
+        }
+
+        // 👉 Caz: logare pentru o dată
         try {
             await apiClient.post(API_URLS.LOG_OUTFIT, {
                 outfitId,
@@ -64,9 +76,6 @@ const SelectOutfitForDateScreen = () => {
                 text1: 'Outfit logged',
                 text2: 'Your outfit was saved successfully.',
             });
-
-
-            const selectedOutfit = outfits.find(o => o.id === outfitId);
 
             if (onGoBack && typeof onGoBack === 'function') {
                 onGoBack(date, {
@@ -139,4 +148,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default SelectOutfitForDateScreen;
+export default SelectOutfitScreen;

@@ -9,15 +9,15 @@ const CATEGORY_IDS = {
     Shoes: 3,
 };
 
-const OutfitPreview = ({ clothingItems, compact = false }) => {
+const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style }) => {
     if (!Array.isArray(clothingItems)) return null;
 
-    const imageSize = compact ? 60 : 90;
-    const smallSize = compact ? 35 : 50;
-    const overlap = compact ? 40 : 70;
+    const imageSize = size === "large" ? 100 : compact ? 60 : 90;
+    const smallSize = size === "large" ? 70 : compact ? 35 : 50;
+    const overlap = size === "large" ? 80 : compact ? 40 : 70;
 
     return (
-        <View style={styles.wrapper}>
+        <View style={[styles.wrapper, style]}>
             <View style={styles.container}>
                 {CATEGORY_ORDER.map((category) => {
                     const items = clothingItems.filter(
@@ -97,12 +97,12 @@ const styles = StyleSheet.create({
         width: '100%',
         padding: 12,
         borderRadius: 16,
-        backgroundColor: '#2E2E2E',
+        backgroundColor: '#bebebe',
         alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
+        // shadowColor: "#000",
+        // shadowOffset: { width: 0, height: 4 },
+        // shadowOpacity: 0.3,
+        // shadowRadius: 6,
         elevation: 4,
     },
 

@@ -3,7 +3,7 @@ import apiClient from "../apiClient";
 
 export const arrayBufferToBase64 = (buffer) => {
     let binary = "";
-    let bytes = new Uint8Array(buffer);
+    const bytes = new Uint8Array(buffer);
     for (let i = 0; i < bytes.length; i++) {
         binary += String.fromCharCode(bytes[i]);
     }
@@ -30,4 +30,30 @@ export const processClothingItems = async (items) => {
             return { ...item, base64Image };
         })
     );
+};
+
+export const fetchProfileImageBase64 = async (userId) => {
+    try {
+        const response = await apiClient.get(`/users/profile-picture/${userId}`, {
+            responseType: "arraybuffer"
+        });
+
+        return `data:image/webp;base64,${arrayBufferToBase64(response.data)}`;
+    } catch (error) {
+        console.error(`❌ Error fetching profile image for user ${userId}:`, error);
+        return null;
+    }
+};
+
+export const processPostImage = async (imageUrl) => {
+    try {
+        const response = await apiClient.get(imageUrl, {
+            responseType: "arraybuffer"
+        });
+
+        return `data:image/webp;base64,${arrayBufferToBase64(response.data)}`;
+    } catch (error) {
+        console.error("❌ Failed to load post image:", error);
+        return null;
+    }
 };

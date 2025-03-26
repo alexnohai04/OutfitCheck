@@ -1,50 +1,59 @@
 package org.example.outfitcheck.controller;
 
-import org.example.outfitcheck.entity.Post;
-import org.example.outfitcheck.repository.PostRepository;
+import lombok.RequiredArgsConstructor;
+import org.example.outfitcheck.dto.PostRequestDTO;
+import org.example.outfitcheck.dto.PostResponseDTO;
+import org.example.outfitcheck.service.PostService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/posts")
+@RequiredArgsConstructor
 public class PostController {
-    private final PostRepository postRepository;
 
-    public PostController(PostRepository postRepository) {
-        this.postRepository = postRepository;
+    private final PostService postService;
+
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<PostResponseDTO> createPost(
+            @RequestParam("userId") Long userId,
+            @RequestParam("outfitId") Long outfitId,
+            @RequestParam("caption") String caption,
+            @RequestParam(value = "hashtags", required = false) String hashtags,
+            @RequestPart("image") MultipartFile imageFile
+    ) {
+        PostRequestDTO dto = new PostRequestDTO();
+        dto.setUserId(userId);
+        dto.setOutfitId(outfitId);
+        dto.setCaption(caption);
+        dto.setHashtags(parseHashtags(hashtags));
+
+        PostResponseDTO responseDTO = postService.createPost(dto, imageFile);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
 
-    // 🔹 1. Creare postare nouă
-    @PostMapping("/create")
-    public ResponseEntity<Post> createPost(@RequestBody Post post) {
-        Post savedPost = postRepository.save(post);
-        return ResponseEntity.ok(savedPost);
+    @GetMapping
+    public ResponseEntity<List<PostResponseDTO>> getAllPosts(@RequestParam Long currentUserId) {
+        return ResponseEntity.ok(postService.getAllPosts(currentUserId));
     }
 
-    // 🔹 2. Obținerea tuturor postărilor unui utilizator
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Post>> getPostsByUser(@PathVariable Long userId) {
-        List<Post> posts = postRepository.findByUserId(userId);
-        return ResponseEntity.ok(posts);
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<Void> toggleLike(@PathVariable Long postId, @RequestParam Long userId) {
+        postService.toggleLike(postId, userId);
+        return ResponseEntity.ok().build();
     }
 
-    // 🔹 3. Obținerea unei postări după ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Post> getPostById(@PathVariable Long id) {
-        Optional<Post> post = postRepository.findById(id);
-        return post.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // 🔹 4. Ștergerea unei postări
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        if (postRepository.existsById(id)) {
-            postRepository.deleteById(id);
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+    private List<String> parseHashtags(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return List.of();
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(tag -> !tag.isEmpty())
+                .collect(Collectors.toList());
     }
 }

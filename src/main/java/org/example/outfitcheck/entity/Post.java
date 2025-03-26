@@ -3,7 +3,9 @@ package org.example.outfitcheck.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "posts")
@@ -20,6 +22,9 @@ public class Post {
     @JoinColumn(name = "user_id")
     private User user;  // Cine a postat
 
+    private String imageUrl; // Poza asociată postării
+
+
     @OneToOne
     @JoinColumn(name = "outfit_id")
     private Outfit outfit;  // Outfit-ul asociat
@@ -29,4 +34,13 @@ public class Post {
 
     @ElementCollection
     private List<String> hashtags;  // Hashtag-uri asociate postării
+
+    @ManyToMany
+    @JoinTable(
+            name = "post_likes",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> likedBy = new HashSet<>();
+
 }
