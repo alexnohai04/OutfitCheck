@@ -150,7 +150,14 @@ const globalStyles = StyleSheet.create({
         height: "100%", // Respectă proporțiile
         borderRadius: 60, // Asigură că și imaginea este rotundă
         resizeMode: "cover", // Evită stretching-ul imaginii
-    }
+    },
+    backButton: {
+        position: "absolute",
+        top: 25,
+        left: 0,
+        zIndex: 10,
+        padding: 20,
+    },
 
 });
 

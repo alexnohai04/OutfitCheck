@@ -18,6 +18,7 @@ import apiClient from "../apiClient";
 import { Swipeable } from "react-native-gesture-handler";
 import globalStyles from "../styles/globalStyles";
 import { processClothingItems } from "../utils/imageUtils";
+import Icon from "react-native-vector-icons/Ionicons";
 
 const ClothingItemsScreen = () => {
     const navigation = useNavigation();
@@ -120,6 +121,13 @@ const ClothingItemsScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>Your Clothes</Text>
+            <TouchableOpacity
+                style={globalStyles.backButton}
+                onPress={() => navigation.goBack()}
+            >
+                <Icon name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+
 
             <View style={styles.buttonsContainer}>
                 <ScrollView

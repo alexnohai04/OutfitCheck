@@ -1,50 +1,43 @@
 package org.example.outfitcheck.controller;
 
-import org.example.outfitcheck.entity.Follow;
-import org.example.outfitcheck.repository.FollowRepository;
+import lombok.RequiredArgsConstructor;
+import org.example.outfitcheck.service.FollowService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/follows")
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class FollowController {
-    private final FollowRepository followRepository;
 
-    public FollowController(FollowRepository followRepository) {
-        this.followRepository = followRepository;
+    private final FollowService followService;
+
+    @GetMapping("/{otherUserId}/is-following")
+    public ResponseEntity<Map<String, Boolean>> isFollowing(
+            @PathVariable Long otherUserId,
+            @RequestParam Long currentUserId
+    ) {
+        boolean following = followService.isFollowing(currentUserId, otherUserId);
+        return ResponseEntity.ok(Map.of("following", following));
     }
 
-    // 🔹 1. Urmărire utilizator
-    @PostMapping("/follow")
-    public ResponseEntity<Follow> followUser(@RequestBody Follow follow) {
-        Follow savedFollow = followRepository.save(follow);
-        return ResponseEntity.ok(savedFollow);
+    @PostMapping("/{otherUserId}/follow")
+    public ResponseEntity<Void> followUser(
+            @PathVariable Long otherUserId,
+            @RequestParam Long currentUserId
+    ) {
+        followService.follow(currentUserId, otherUserId);
+        return ResponseEntity.ok().build();
     }
 
-    // 🔹 2. Obținerea tuturor utilizatorilor pe care îi urmărește un user
-    @GetMapping("/following/{userId}")
-    public ResponseEntity<List<Follow>> getFollowing(@PathVariable Long userId) {
-        List<Follow> following = followRepository.findByFollowerId(userId);
-        return ResponseEntity.ok(following);
-    }
-
-    // 🔹 3. Obținerea tuturor follower-ilor unui user
-    @GetMapping("/followers/{userId}")
-    public ResponseEntity<List<Follow>> getFollowers(@PathVariable Long userId) {
-        List<Follow> followers = followRepository.findByFollowingId(userId);
-        return ResponseEntity.ok(followers);
-    }
-
-    // 🔹 4. Anularea urmăririi unui utilizator
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> unfollowUser(@PathVariable Long id) {
-        if (followRepository.existsById(id)) {
-            followRepository.deleteById(id);
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+    @PostMapping("/{otherUserId}/unfollow")
+    public ResponseEntity<Void> unfollowUser(
+            @PathVariable Long otherUserId,
+            @RequestParam Long currentUserId
+    ) {
+        followService.unfollow(currentUserId, otherUserId);
+        return ResponseEntity.ok().build();
     }
 }

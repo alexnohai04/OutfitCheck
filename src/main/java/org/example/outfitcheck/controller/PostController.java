@@ -43,11 +43,33 @@ public class PostController {
         return ResponseEntity.ok(postService.getAllPosts(currentUserId));
     }
 
+    @GetMapping(params = "userId")
+    public ResponseEntity<List<PostResponseDTO>> getPostsByUserId(
+            @RequestParam Long userId,
+            @RequestParam Long currentUserId
+    ) {
+        return ResponseEntity.ok(postService.getPostsByUserId(userId, currentUserId));
+    }
+
     @PostMapping("/{postId}/like")
     public ResponseEntity<Void> toggleLike(@PathVariable Long postId, @RequestParam Long userId) {
         postService.toggleLike(postId, userId);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<?> deletePost(
+            @PathVariable Long postId,
+            @RequestParam Long userId
+    ) {
+        try {
+            postService.deletePost(postId, userId);
+            return ResponseEntity.ok("Post deleted successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
 
     private List<String> parseHashtags(String raw) {
         if (raw == null || raw.trim().isEmpty()) return List.of();

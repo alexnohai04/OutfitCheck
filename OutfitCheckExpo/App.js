@@ -20,6 +20,8 @@ import SelectOutfitScreen from "./screens/SelectOutfitScreen";
 import Toast from 'react-native-toast-message';
 import { toastConfig } from './reusable/ToastConfig';
 import AddPostScreen from "./screens/AddPostScreen";
+import UserProfileScreen from "./screens/UserProfileScreen";
+import PostDetailsScreen from "./screens/PostDetailsScreen";
 
 const Stack = createStackNavigator();
 
@@ -50,6 +52,9 @@ const AppNavigator = () => {
                 <Stack.Screen name="CalendarScreen" component={CalendarScreen} />
                 <Stack.Screen name="SelectOutfit" component={SelectOutfitScreen} />
                 <Stack.Screen name="AddPost" component={AddPostScreen} />
+                <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+                <Stack.Screen name="PostDetailsScreen" component={PostDetailsScreen} />
+
 
             </Stack.Navigator>
             <Toast config={toastConfig} position="top" />

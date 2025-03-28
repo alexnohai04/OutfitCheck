@@ -1,5 +1,6 @@
 package org.example.outfitcheck.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,4 +32,13 @@ public class User {
     @JsonManagedReference
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClothingItem> clothingItems;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> following;  // pe cine urmărește
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> followers;  // cine îl urmărește
+
 }

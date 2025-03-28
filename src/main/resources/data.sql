@@ -17,3 +17,5 @@ SET username = CONCAT('user_', id)
 WHERE username IS NULL;
 
 delete from posts;
+
+ALTER TABLE posts DROP CONSTRAINT ukh1rlsmw5ajcre3jk60xvsbtds;

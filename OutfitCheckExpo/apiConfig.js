@@ -39,6 +39,14 @@ const API_URLS = {
     ADD_POST: `${API_BASE}/api/posts`, // POST (multipart/form-data)
     GET_ALL_POSTS: (currentUserId) => `${API_BASE}/api/posts?currentUserId=${currentUserId}`, // GET
     TOGGLE_LIKE: (postId, userId) => `${API_BASE}/api/posts/${postId}/like?userId=${userId}`, // POST
+    DELETE_POST: (postId) => `${API_BASE}/api/posts/${postId}`,
+
+    FOLLOW_USER: (userId) => `${API_BASE}/api/users/${userId}/follow`, // POST
+    UNFOLLOW_USER: (userId) => `${API_BASE}/api/users/${userId}/unfollow`, // POST
+    IS_FOLLOWING: (userId) => `${API_BASE}/api/users/${userId}/is-following`, // GET
+
+    GET_POSTS_BY_USER: (userId, currentUserId) =>
+        `${API_BASE}/api/posts?userId=${userId}&currentUserId=${currentUserId}`,
 
 };
 

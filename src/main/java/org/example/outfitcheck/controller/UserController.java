@@ -4,21 +4,16 @@ import org.example.outfitcheck.dto.UserDTO;
 import org.example.outfitcheck.entity.User;
 import org.example.outfitcheck.config.JwtUtil;
 import org.example.outfitcheck.service.UserService;
+import org.example.outfitcheck.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
-
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -31,13 +26,14 @@ public class UserController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-
+    private final UserMapper userMapper;
 
     @Autowired
-    public UserController(UserService userService, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserController(UserService userService, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserMapper userMapper) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.userMapper = userMapper;
     }
 
     @PostMapping(value = "/register", consumes = "application/json", produces = "application/json")
@@ -55,7 +51,6 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
-
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> loginData) {
@@ -76,19 +71,10 @@ public class UserController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    //    @GetMapping("/profile")
-//    public ResponseEntity<Map<String, String>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
-//        String email = userDetails.getUsername(); // ✅ Spring Security gestionează autenticarea
-//
-//        return ResponseEntity.ok(Map.of("email", email));
-//    }
     @GetMapping("/profile/{id}")
     public ResponseEntity<UserDTO> getUserProfile(@PathVariable Long id) {
         User user = userService.getUserById(id);
-
-        // Convertim User -> UserDTO
-        UserDTO userDTO = new UserDTO(user.getId(), user.getUsername(), user.getEmail(), user.getProfilePicUrl());
-
+        UserDTO userDTO = userMapper.toDto(user);
         return ResponseEntity.ok(userDTO);
     }
 
@@ -117,6 +103,4 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-
 }

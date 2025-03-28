@@ -1,12 +1,13 @@
 package org.example.outfitcheck.repository;
 
 import org.example.outfitcheck.entity.Follow;
+import org.example.outfitcheck.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import java.util.List;
 
-@Repository
+import java.util.Optional;
+
 public interface FollowRepository extends JpaRepository<Follow, Long> {
-    List<Follow> findByFollowerId(Long followerId);
-    List<Follow> findByFollowingId(Long followingId);
+    boolean existsByFollowerAndFollowing(User follower, User following);
+    Optional<Follow> findByFollowerAndFollowing(User follower, User following);
+    void deleteByFollowerAndFollowing(User follower, User following);
 }

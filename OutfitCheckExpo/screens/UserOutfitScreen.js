@@ -8,6 +8,7 @@ import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import { Swipeable } from 'react-native-gesture-handler';
 import { processClothingItems } from "../utils/imageUtils";
+import Icon from "react-native-vector-icons/Ionicons";
 
 const UserOutfitsScreen = () => {
     const [outfits, setOutfits] = useState([]);
@@ -66,6 +67,14 @@ const UserOutfitsScreen = () => {
             ]
         );
     };
+    if (loading) {
+        return (
+            <View style={globalStyles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FF6B6B" />
+            </View>
+        );
+    }
+
 
     const renderRightActions = (outfitId) => (
         <TouchableOpacity style={globalStyles.deleteButton} onPress={() => confirmDelete(outfitId)}>
@@ -104,7 +113,15 @@ const UserOutfitsScreen = () => {
 
     return (
         <SafeAreaView style={globalStyles.container}>
+
             <Text style={globalStyles.title}>Your Outfits</Text>
+            <TouchableOpacity
+                style={globalStyles.backButton}
+                onPress={() => navigation.goBack()}
+            >
+                <Icon name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+
             {loading ? (
                 <ActivityIndicator size="large" color="#FF6B6B" />
             ) : (

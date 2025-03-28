@@ -25,7 +25,7 @@ public class Post {
     private String imageUrl; // Poza asociată postării
 
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "outfit_id")
     private Outfit outfit;  // Outfit-ul asociat
 
@@ -42,5 +42,7 @@ public class Post {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> likedBy = new HashSet<>();
+
+
 
 }

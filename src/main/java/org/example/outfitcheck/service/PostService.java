@@ -58,6 +58,13 @@ public class PostService {
                 .map(post -> postMapper.toDto(post, currentUserId))
                 .collect(Collectors.toList());
     }
+    public List<PostResponseDTO> getPostsByUserId(Long userId, Long currentUserId) {
+        List<Post> posts = postRepository.findByUserId(userId);
+        return posts.stream()
+                .map(post -> postMapper.toDto(post, currentUserId))
+                .collect(Collectors.toList());
+    }
+
 
     public void toggleLike(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
@@ -93,5 +100,16 @@ public class PostService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to save post image", e);
         }
+    }
+
+    public void deletePost(Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if (!post.getUser().getId().equals(userId)) {
+            throw new RuntimeException("You can only delete your own posts.");
+        }
+
+        postRepository.delete(post);
     }
 }

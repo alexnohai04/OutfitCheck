@@ -14,4 +14,7 @@ public class UserDTO {
     private String username;
     private String email;
     private String profilePicUrl;
+
+    private int followersCount;
+    private int followingCount;
 }

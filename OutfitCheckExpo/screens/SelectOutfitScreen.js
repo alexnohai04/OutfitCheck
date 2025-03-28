@@ -98,7 +98,8 @@ const SelectOutfitScreen = () => {
             onPress={() => handleLogOutfit(item.id)}
             activeOpacity={0.8}
         >
-            <Text style={styles.outfitName}>{item.name}</Text>
+
+            {/*<Text style={styles.outfitName}>{item.name}</Text>*/}
             <OutfitPreview clothingItems={item.clothingItems} compact />
         </TouchableOpacity>
     );
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
 
     gridItem: {
         width: '33.33%', // 🔥 fixăm 3 pe rând
-        height: '40%',
+        height: '100%',
         padding: 8,
         alignItems: 'center',
         justifyContent: 'flex-start',

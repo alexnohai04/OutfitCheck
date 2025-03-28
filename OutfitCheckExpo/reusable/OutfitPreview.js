@@ -12,9 +12,9 @@ const CATEGORY_IDS = {
 const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style }) => {
     if (!Array.isArray(clothingItems)) return null;
 
-    const imageSize = size === "large" ? 100 : compact ? 60 : 90;
-    const smallSize = size === "large" ? 70 : compact ? 35 : 50;
-    const overlap = size === "large" ? 80 : compact ? 40 : 70;
+    const imageSize = size === "large" ? 170 : compact ? 70 : 100;
+    const smallSize = size === "large" ? 80 : compact ? 45 : 60;
+    const overlap = size === "large" ? 100 : compact ? 35 : 75;
 
     return (
         <View style={[styles.wrapper, style]}>
@@ -91,23 +91,22 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style 
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     wrapper: {
         width: '100%',
-        padding: 12,
+        height: '100%',
+        backgroundColor: '#3A3A3A',
         borderRadius: 16,
-        backgroundColor: '#bebebe',
-        alignItems: 'center',
-        // shadowColor: "#000",
-        // shadowOffset: { width: 0, height: 4 },
-        // shadowOpacity: 0.3,
-        // shadowRadius: 6,
+        paddingVertical: 12,
+        paddingHorizontal: 0, // scoatem padding lateral
+        alignItems: 'stretch', // fundalul se va întinde complet
         elevation: 4,
+        justifyContent: 'center'
     },
-
     container: {
-        alignItems: "center",
+        flexDirection: "column",
+        width: '100%',        // se întinde complet în wrapper
+        paddingHorizontal: 12, // adăugăm padding interior, dacă vrei spațiu pt imagini
     },
     section: {
         alignItems: "center",
@@ -116,7 +115,7 @@ const styles = StyleSheet.create({
     topOverlapContainer: {
         position: "relative",
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "flex-start", // pentru ca top-urile să înceapă din stânga
     },
 });
 
