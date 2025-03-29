@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, Alert, StyleSheet } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import {View, Text, ActivityIndicator, Alert, StyleSheet, TouchableOpacity} from "react-native";
+import {useNavigation, useRoute} from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import globalStyles from "../styles/globalStyles";
 import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import { processClothingItems } from "../utils/imageUtils";
-import OutfitPreview from "../reusable/OutfitPreview"; // 👈 Importăm componenta
+import OutfitPreview from "../reusable/OutfitPreview";
+import Icon from "react-native-vector-icons/Ionicons"; // 👈 Importăm componenta
 
 const OutfitDetailsScreen = () => {
     const route = useRoute();
     const { outfitId } = route.params;
     const [outfit, setOutfit] = useState(null);
     const [loading, setLoading] = useState(true);
+    const navigation = useNavigation();
 
     useEffect(() => {
         const fetchOutfitDetails = async () => {
@@ -59,6 +61,13 @@ const OutfitDetailsScreen = () => {
 
     return (
         <SafeAreaView style={globalStyles.container}>
+            <TouchableOpacity
+                style={globalStyles.backButton}
+                onPress={() => navigation.goBack()}
+            >
+                <Icon name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+
             <Text style={globalStyles.title}>{outfit.name}</Text>
 
             <View style={styles.previewContainer}>
@@ -72,7 +81,7 @@ const styles = StyleSheet.create({
     previewContainer: {
         marginTop: 20,
         alignItems: 'center',
-        width: '70%',
+        width: '80%',
         height: '80%'
     },
 });

@@ -168,20 +168,45 @@ const ProfileScreen = () => {
         />
     );
 
-    const renderOutfits = () => (
-        <FlatList
-            data={outfits}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-                <View style={styles.gridItem}>
-                    <OutfitPreview clothingItems={item.clothingItems} compact />
-                </View>
-            )}
-            numColumns={3}
-            columnWrapperStyle={styles.row}
-            contentContainerStyle={{ paddingBottom: 100 }}
-        />
-    );
+    const renderOutfits = () => {
+        const dataWithAddButton = [{ isAddButton: true }, ...outfits];
+
+        return (
+            <FlatList
+                data={dataWithAddButton}
+                keyExtractor={(item, index) => item.id?.toString() || `add-${index}`}
+                renderItem={({ item }) => {
+                    if (item.isAddButton) {
+                        return (
+                            <TouchableOpacity
+                                style={styles.gridItem}
+                                onPress={() => navigation.navigate("OutfitBuilder")}
+                            >
+                                <View style={styles.outfitPreviewWrapper}>
+                                    <View style={styles.outfitPreviewContainer}>
+                                        <Ionicons name="add" size={40} color="#FFF" />
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    }
+
+
+                    return (
+                        <TouchableOpacity
+                            style={styles.gridItem}
+                            onPress={() => navigation.navigate('OutfitDetails', { outfitId: item.id })}
+                        >
+                            <OutfitPreview clothingItems={item.clothingItems} compact />
+                        </TouchableOpacity>
+                    );
+                }}
+                numColumns={3}
+                columnWrapperStyle={styles.row}
+                contentContainerStyle={{ paddingBottom: 100 }}
+            />
+        );
+    };
 
 
     return (
@@ -334,6 +359,7 @@ const styles = StyleSheet.create({
         padding: 8,
         alignItems: "center",
         justifyContent: "flex-start",
+        minHeight: 290
     },
     row: {
         flex: 1,
@@ -343,6 +369,37 @@ const styles = StyleSheet.create({
     flatListRow: {
         justifyContent: "flex-start",
     },
+    addButton: {
+        borderWidth: 2,
+        borderColor: "#3A3A3A",
+        borderRadius: 16,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingVertical: 12,
+       // height: 110,
+       // width: 110,
+       // margin: 4,
+        //backgroundColor: "#2E2E2E",
+        //padding: 30
+    },
+    outfitPreviewWrapper: {
+        width: '100%',
+        borderWidth: 2,
+        borderColor: "#3A3A3A",
+        borderRadius: 16,
+        borderStyle: "dashed",
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 4,
+        minHeight: 290, // aproximativ înălțimea medie a unui OutfitPreview
+    },
+    outfitPreviewContainer: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
 });
 
 export default ProfileScreen;

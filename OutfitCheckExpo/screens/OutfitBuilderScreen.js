@@ -295,6 +295,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-start",
         alignItems: "center",
         width: "60%",
+        maxHeight:"50%"
     },
     panelContainer: {
         position: "absolute",

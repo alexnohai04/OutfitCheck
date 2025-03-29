@@ -12,7 +12,7 @@ const CATEGORY_IDS = {
 const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style }) => {
     if (!Array.isArray(clothingItems)) return null;
 
-    const imageSize = size === "large" ? 170 : compact ? 70 : 100;
+    const imageSize = size === "large" ? 170 : compact ? 60 : 100;
     const smallSize = size === "large" ? 80 : compact ? 45 : 60;
     const overlap = size === "large" ? 100 : compact ? 35 : 75;
 

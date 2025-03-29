@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
 
     gridItem: {
         width: '33.33%', // 🔥 fixăm 3 pe rând
-        height: '100%',
+        minHeight: 290,
         padding: 8,
         alignItems: 'center',
         justifyContent: 'flex-start',

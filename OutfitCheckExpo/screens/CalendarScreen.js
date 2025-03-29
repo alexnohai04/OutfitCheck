@@ -228,14 +228,14 @@ const CalendarScreen = () => {
                     </TouchableWithoutFeedback>
 
                     <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
-                        <ScrollView contentContainerStyle={{ alignItems: "center" }}>
+                        <View contentContainerStyle={{ alignItems: "center" }}>
                             <Text style={styles.modalTitle}>{selectedDate}</Text>
 
                             {outfit ? (
                                 loadingImages ? (
                                     <ActivityIndicator size="large" color="#FF6B6B" style={{ marginVertical: 12 }} />
                                 ) : (
-                                    <View style={{ width: '100%', paddingHorizontal: 24, margin: 10 }}>
+                                    <View style={{ width: '100%', paddingHorizontal: 24, marginBottom: 50 }}>
                                         <Swipeable renderRightActions={renderRightActions}>
                                             <OutfitPreview clothingItems={selectedOutfitImages} />
                                         </Swipeable>
@@ -250,7 +250,7 @@ const CalendarScreen = () => {
                                 </>
                             )}
 
-                        </ScrollView>
+                        </View>
                     </Animated.View>
                 </View>
             )}
@@ -283,6 +283,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 12,
+        alignSelf:"center"
     },
     modalText: {
         color: '#FFFFFF',

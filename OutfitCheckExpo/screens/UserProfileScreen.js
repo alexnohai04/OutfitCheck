@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     },
     gridContainer: {
         paddingBottom: 100,
+
     },
     postImage: {
         width: 110,
@@ -310,7 +311,8 @@ const styles = StyleSheet.create({
         width: '33.33%',
         padding: 8,
         alignItems: 'center',
-        justifyContent: 'flex-start',
+        justifyContent: "flex-start",
+        minHeight: 290
     },
     row: {
         flex: 1,
