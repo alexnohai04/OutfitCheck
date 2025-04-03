@@ -19,3 +19,6 @@ WHERE username IS NULL;
 delete from posts;
 
 ALTER TABLE posts DROP CONSTRAINT ukh1rlsmw5ajcre3jk60xvsbtds;
+
+ALTER TABLE clothing_items DROP COLUMN color;
+

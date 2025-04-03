@@ -91,6 +91,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-vision</artifactId>
+            <version>3.58.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -19,6 +19,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import globalStyles from "../styles/globalStyles";
 import { processClothingItems } from "../utils/imageUtils";
 import Icon from "react-native-vector-icons/Ionicons";
+import Toast from "react-native-toast-message";
 
 const ClothingItemsScreen = () => {
     const navigation = useNavigation();
@@ -59,7 +60,12 @@ const ClothingItemsScreen = () => {
             const response = await apiClient.delete(API_URLS.DELETE_CLOTHING_ITEM(itemId));
             if (response.status === 200) {
                 setClothingItems(prevItems => prevItems.filter(item => item.id !== itemId));
-                Alert.alert("Success", "Clothing item deleted successfully!");
+                Toast.show({
+                    type: 'success',
+                    text1: 'Clothing item deleted',
+                    text2: 'The clothing item was removed from your wardrobe.',
+                    position: 'top',
+                });
             } else {
                 Alert.alert("Error", "Failed to delete clothing item.");
             }
@@ -96,7 +102,7 @@ const ClothingItemsScreen = () => {
                     </View>
                 )}
                 <View style={styles.infoContainer}>
-                    <Text style={styles.itemText}>Color: {item.color}</Text>
+                    <Text style={styles.itemText}>Colors: {item.colors.join(', ')}</Text>
                     <Text style={styles.itemText}>Material: {item.material}</Text>
                     <Text style={styles.itemText}>Category: {item.category.name}</Text>
                 </View>

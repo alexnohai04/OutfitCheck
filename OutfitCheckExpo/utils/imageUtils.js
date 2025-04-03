@@ -57,3 +57,19 @@ export const processPostImage = async (imageUrl) => {
         return null;
     }
 };
+
+
+export const processClothingItemAfterBgRemoval = async (imageUrl) => {
+    try {
+        console.log(imageUrl)
+        const filename = imageUrl.split("/").pop(); // extrage doar numele fișierului
+        const response = await apiClient.get(`/api/clothing/image/${filename}`, {
+            responseType: "arraybuffer",
+        });
+
+        return `data:image/webp;base64,${arrayBufferToBase64(response.data)}`;
+    } catch (error) {
+        console.error("❌ Failed to process clothing item image:", error);
+        return null;
+    }
+};

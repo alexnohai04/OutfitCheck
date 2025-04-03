@@ -48,6 +48,8 @@ const API_URLS = {
     GET_POSTS_BY_USER: (userId, currentUserId) =>
         `${API_BASE}/api/posts?userId=${userId}&currentUserId=${currentUserId}`,
 
+    UPLOAD_CLOTHING_IMAGE: `${API_BASE}/api/clothing/upload-temp-image`
+
 };
 
 export default API_URLS;

@@ -48,8 +48,15 @@ const OutfitBuilderScreen = () => {
     const panelPosition = useSharedValue(height * 0.5);
     const isDragging = useRef(false);
 
-    const CATEGORY_ORDER = ["Hat", "Top", "Pants", "Shoes"];
-    const CATEGORY_IDS = { Hat: 4, Top: 1, Pants: 2, Shoes: 3 };
+    const CATEGORY_ORDER = ["Headwear", "Topwear", "Bottomwear", "Footwear", "FullBodywear"];
+    const CATEGORY_IDS = {
+        Headwear: 4,
+        Topwear: 1,
+        Bottomwear: 2,
+        Footwear: 3,
+        FullBodywear: 5,
+    };
+
 
     const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -94,10 +101,10 @@ const OutfitBuilderScreen = () => {
                 return prevItems.filter((i) => i.id !== item.id);
             }
 
-            if (item.category.id === CATEGORY_IDS.Top) {
-                const tops = prevItems.filter((i) => i.category.id === CATEGORY_IDS.Top);
+            if (item.category.id === CATEGORY_IDS.Topwear) {
+                const tops = prevItems.filter((i) => i.category.id === CATEGORY_IDS.Topwear);
                 if (tops.length < 2) return [...prevItems, item];
-                return [...tops.slice(1), item, ...prevItems.filter((i) => i.category.id !== CATEGORY_IDS.Top)];
+                return [...tops.slice(1), item, ...prevItems.filter((i) => i.category.id !== CATEGORY_IDS.Topwear)];
             }
 
             return [...prevItems.filter((i) => i.category.id !== item.category.id), item];

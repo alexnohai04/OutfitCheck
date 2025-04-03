@@ -26,7 +26,7 @@ const ProfileScreen = () => {
     const { userId, logoutUser } = useContext(UserContext);
     const [user, setUser] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [posts, setPosts] = useState([]);
     const [postImages, setPostImages] = useState({});
     const [tab, setTab] = useState("posts");

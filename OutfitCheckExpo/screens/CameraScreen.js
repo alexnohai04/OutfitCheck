@@ -3,6 +3,9 @@ import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+import apiClient from "../apiClient";
+import API_URLS from "../apiConfig";
 
 const handleScanArticle = async (navigation) => {
     const options = [
@@ -26,9 +29,9 @@ const handleScanArticle = async (navigation) => {
                 });
 
                 if (!result.canceled && result.assets?.length > 0) {
-                    console.log("📸 Clothing photo taken:", result.assets[0].uri);
-                    navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
+                    navigation.navigate("LoadingScreen", { imageUri: result.assets[0].uri });
                 }
+
             }
         },
         {
@@ -45,15 +48,14 @@ const handleScanArticle = async (navigation) => {
                 });
 
                 if (!result.canceled && result.assets?.length > 0) {
-                    console.log("🖼️ Clothing image selected:", result.assets[0].uri);
-                    navigation.navigate("AddClothingItem", { imageUri: result.assets[0].uri });
+                    navigation.navigate("LoadingScreen", { imageUri: result.assets[0].uri });
                 }
+
             }
         },
         { text: options[2].text, style: "cancel" }
     ]);
 };
-
 const handleCreatePost = async (navigation) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -68,13 +70,10 @@ const handleCreatePost = async (navigation) => {
         quality: 1,
     });
 
-
     if (!result.canceled && result.assets?.length > 0) {
-        console.log("🖼️ Post image selected:", result.assets[0].uri);
         navigation.navigate("AddPost", { imageUri: result.assets[0].uri });
     }
 };
-
 
 const CameraScreen = () => {
     const navigation = useNavigation();

@@ -7,7 +7,8 @@ import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import { processClothingItems } from "../utils/imageUtils";
 import OutfitPreview from "../reusable/OutfitPreview";
-import Icon from "react-native-vector-icons/Ionicons"; // 👈 Importăm componenta
+import Icon from "react-native-vector-icons/Ionicons";
+import Toast from "react-native-toast-message";
 
 const OutfitDetailsScreen = () => {
     const route = useRoute();
@@ -43,6 +44,42 @@ const OutfitDetailsScreen = () => {
         fetchOutfitDetails();
     }, [outfitId]);
 
+    const confirmDelete = () => {
+        Alert.alert(
+            "Delete outfit",
+            "Are you sure you want to delete the outfit?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => deleteOutfit(outfitId)
+                }
+            ]
+        );
+    };
+
+
+    const deleteOutfit = async (date) => {
+        try {
+            await apiClient.delete(API_URLS.DELETE_OUTFIT(outfitId));
+            navigation.goBack();
+            Toast.show({
+                type: 'success',
+                text1: 'Outfit deleted',
+                text2: 'The outfit was removed from your wardrobe.',
+                position: 'top',
+            });
+        } catch (err) {
+            console.error("Error deleting outfit:", err);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Could not delete the outfit.',
+                position: 'top',
+            });
+        }
+    };
     if (loading) {
         return (
             <SafeAreaView style={globalStyles.container}>
@@ -71,8 +108,12 @@ const OutfitDetailsScreen = () => {
             <Text style={globalStyles.title}>{outfit.name}</Text>
 
             <View style={styles.previewContainer}>
-                <OutfitPreview clothingItems={outfit.clothingItems} size="large" />
+                    <OutfitPreview clothingItems={outfit.clothingItems} size="large" />
             </View>
+                <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
+                    <Text style={globalStyles.deleteText}>Delete</Text>
+                </TouchableOpacity>
+
         </SafeAreaView>
     );
 };
@@ -84,6 +125,17 @@ const styles = StyleSheet.create({
         width: '80%',
         height: '80%'
     },
+    deleteButton: {
+        backgroundColor: '#FF3B30',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 90,
+        height: 20,
+        borderRadius: 10,
+        //flex: 1,
+        margin: 20
+    },
+
 });
 
 export default OutfitDetailsScreen;

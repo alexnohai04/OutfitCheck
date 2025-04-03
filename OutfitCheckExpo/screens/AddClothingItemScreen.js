@@ -15,38 +15,48 @@ import {
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import * as ImageManipulator from "expo-image-manipulator";
-import API_URLS from "../apiConfig";
 import { UserContext } from "../UserContext";
 import apiClient from "../apiClient";
+import API_URLS from "../apiConfig";
+import { processClothingItemAfterBgRemoval } from "../utils/imageUtils";
+import Toast from "react-native-toast-message";
 
 const AddClothingItemScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
-    const { imageUri } = route.params || {};
+    const { imageUrl, suggestedCategory, topColors = [] } = route.params || {};
     const { userId } = useContext(UserContext);
 
-    const [color, setColor] = useState("");
+    const [previewBase64, setPreviewBase64] = useState(null);
+    const [colors, setColors] = useState([]);
+    const [newColorInput, setNewColorInput] = useState("");
     const [material, setMaterial] = useState("");
     const [category, setCategory] = useState(null);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    const getContrastingTextColor = (hex) => {
+        const cleanHex = hex.replace("#", "");
+        const r = parseInt(cleanHex.slice(0, 2), 16);
+        const g = parseInt(cleanHex.slice(2, 4), 16);
+        const b = parseInt(cleanHex.slice(4, 6), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+        return luminance > 186 ? "#000" : "#fff";
+    };
+
+
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const response = await apiClient.get(API_URLS.GET_CLOTHING_CATEGORIES);
                 const data = response.data;
-
-                const formattedCategories = data.map((category) => ({
+                const formatted = data.map((category) => ({
                     label: category.name,
-                    value: category.id
+                    value: category.id,
                 }));
-
-                setItems(formattedCategories);
+                setItems(formatted);
             } catch (error) {
-                console.error("Error loading categories:", error.response?.data || error.message);
                 Alert.alert("Error", "Unable to load categories.");
             }
         };
@@ -54,70 +64,71 @@ const AddClothingItemScreen = () => {
         fetchCategories();
     }, []);
 
-    const handleSave = async () => {
-        if (!imageUri) {
-            Alert.alert("Error", "No image available! Please take a photo.");
-            return;
+    useEffect(() => {
+        const fetchImage = async () => {
+            if (imageUrl) {
+                const base64 = await processClothingItemAfterBgRemoval(imageUrl);
+                setPreviewBase64(base64);
+            }
+        };
+        fetchImage();
+    }, [imageUrl]);
+
+    useEffect(() => {
+        if (topColors.length > 0 && colors.length === 0) {
+            setColors(topColors.map(c => c.name));
         }
-        if (!color || !material || !category) {
-            Alert.alert("Error", "Please fill in all fields!");
-            return;
+
+        if (suggestedCategory && items.length > 0 && !category) {
+            const matched = items.find(cat => cat.label.toLowerCase() === suggestedCategory.toLowerCase());
+            if (matched) setCategory(matched.value);
+        }
+    }, [topColors, suggestedCategory, items]);
+
+    const removeColor = (colorName) => {
+        setColors(prev => prev.filter(c => c !== colorName));
+    };
+
+    const addNewColor = () => {
+        const trimmed = newColorInput.trim();
+        if (trimmed && !colors.includes(trimmed)) {
+            setColors(prev => [...prev, trimmed]);
+            setNewColorInput("");
+        }
+    };
+
+    const handleSave = async () => {
+        if (!imageUrl) return Alert.alert("Error", "No image available!");
+        if (colors.length === 0 || !category) {
+            return Toast.show({
+                type: 'error',
+                text1: 'Please fill all the fields!',
+                position: 'top',
+            });
         }
 
         setLoading(true);
-
         try {
-            // 🔹 Obține dimensiunile imaginii originale
-            const original = await ImageManipulator.manipulateAsync(imageUri, []);
-            const { width, height } = original;
-
-            // 🔹 Determină dimensiunea pătrată maximă și zona de crop centrată
-            const size = Math.min(width, height);
-            const cropRegion = {
-                originX: (width - size) / 2,
-                originY: (height - size) / 2,
-                width: size,
-                height: size
-            };
-
-            // 🔹 Crop centrat + resize la 1080x1080
-            const squareImage = await ImageManipulator.manipulateAsync(
-                imageUri,
-                [
-                    { crop: cropRegion },
-                    { resize: { width: 1080, height: 1080 } }
-                ],
-                { compress: 0.8, format: ImageManipulator.SaveFormat.WEBP }
-            );
-
-            let formData = new FormData();
-            formData.append("userId", userId);
-            formData.append("categoryId", category);
-            formData.append("color", color);
-            formData.append("material", material);
-            formData.append("file", {
-                uri: squareImage.uri,
-                name: "clothing.webp",
-                type: "image/webp",
+            const response = await apiClient.post(API_URLS.ADD_CLOTHING, {
+                userId,
+                categoryId: category,
+                colors,
+                material,
+                imageUrl
             });
 
-            console.log("📦 Sending cropped & resized image to backend:", formData);
-
-            const response = await apiClient.post(API_URLS.ADD_CLOTHING, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            if (response.status === 201 || response.status === 200) {
-                Alert.alert("Success", "Clothing item saved successfully!");
-                navigation.navigate("ClothingItems");
+            if (response.status === 200 || response.status === 201) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Clothing item saved successfully!',
+                    position: 'top',
+                });
+                navigation.replace("ClothingItems");
             } else {
-                Alert.alert("Error", response.data.message || "Failed to save item. Please try again.");
+                Alert.alert("Error", response.data.message || "Failed to save item.");
             }
         } catch (error) {
-            console.error("Error saving item:", error.response?.data || error.message);
-            Alert.alert("Error", "An issue occurred while saving. Check your server connection.");
+            Alert.alert("Error", "An issue occurred while saving.");
         } finally {
             setLoading(false);
         }
@@ -133,31 +144,51 @@ const AddClothingItemScreen = () => {
                 <View style={styles.innerContainer}>
                     <Text style={styles.title}>Add Clothing Item</Text>
 
-                    {imageUri ? (
-                        <Image source={{ uri: imageUri }} style={styles.image} />
+                    {previewBase64 ? (
+                        <Image source={{ uri: previewBase64 }} style={styles.image} />
                     ) : (
                         <View style={styles.imagePlaceholder}>
-                            <Text style={styles.imagePlaceholderText}>No image</Text>
+                            <Text style={styles.imagePlaceholderText}>Loading image...</Text>
                         </View>
                     )}
 
-                    <TextInput
-                        placeholder="Color"
-                        placeholderTextColor="#A0A0A0"
-                        value={color}
-                        onChangeText={setColor}
-                        style={styles.input}
-                    />
+                    <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
+                        Detected colors:
+                    </Text>
+                    <View style={styles.colorListWrap}>
+                        {colors.map((name, idx) => {
+                            const hex = topColors.find(c => c.name === name)?.hex || "#999";
+                            return (
+                                <View key={idx} style={[styles.colorBadge, { backgroundColor: hex }]}>
+                                    <Text style={[styles.badgeText, { color: getContrastingTextColor(hex) }]}>{name}</Text>
+                                    <TouchableOpacity onPress={() => removeColor(name)}>
+                                        <Text style={[styles.badgeClose, { color: getContrastingTextColor(hex) }]}>✕</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            );
+                        })}
+                    </View>
 
-                    <TextInput
-                        placeholder="Material"
-                        placeholderTextColor="#A0A0A0"
-                        value={material}
-                        onChangeText={setMaterial}
-                        style={styles.input}
-                    />
 
-                    <Text style={styles.label}>Category:</Text>
+                    <View style={styles.addColorRow}>
+                        <TextInput
+                            placeholder="Add color"
+                            placeholderTextColor="#A0A0A0"
+                            value={newColorInput}
+                            onChangeText={setNewColorInput}
+                            style={styles.colorInput}
+                        />
+                        <TouchableOpacity onPress={addNewColor} style={styles.addBtn}>
+                            <Text style={styles.addBtnText}>+</Text>
+                        </TouchableOpacity>
+                    </View>
+
+
+                    {suggestedCategory && (
+                        <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
+                            Suggested category: {suggestedCategory}
+                        </Text>
+                    )}
                     {loading ? (
                         <ActivityIndicator size="large" color="#FF6B6B" />
                     ) : (
@@ -178,8 +209,19 @@ const AddClothingItemScreen = () => {
                             zIndex={1000}
                             zIndexInverse={3000}
                             onOpen={Keyboard.dismiss}
+                            iconColor="#aaa"
                         />
                     )}
+
+
+
+                    <TextInput
+                        placeholder="Material"
+                        placeholderTextColor="#A0A0A0"
+                        value={material}
+                        onChangeText={setMaterial}
+                        style={styles.input}
+                    />
 
                     <TouchableOpacity onPress={handleSave} style={styles.button}>
                         <Text style={styles.buttonText}>Save Item</Text>
@@ -248,6 +290,58 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
     },
+    colorList: {
+        width: "100%",
+        marginBottom: 10,
+    },
+    colorItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 6,
+    },
+    colorBox: {
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        marginRight: 8,
+        borderWidth: 1,
+        borderColor: "#fff",
+    },
+    colorText: {
+        color: "#fff",
+        flex: 1,
+    },
+    removeBtn: {
+        color: "#444",
+        fontSize: 16,
+        marginLeft: 10,
+    },
+    addColorRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 20,
+        width: "100%",
+    },
+    colorInput: {
+        flex: 1,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: "#444",
+        borderRadius: 10,
+        backgroundColor: "#3A3A3A",
+        color: "#FFFFFF",
+    },
+    addBtn: {
+        marginLeft: 10,
+        backgroundColor: "#FF6B6B",
+        borderRadius: 8,
+        padding: 10,
+    },
+    addBtnText: {
+        color: "#fff",
+        fontWeight: "bold",
+        fontSize: 18,
+    },
     dropdownContainer: {
         width: "100%",
         marginBottom: 20,
@@ -289,6 +383,32 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "bold",
     },
+    colorListWrap: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+        marginBottom: 16,
+        width: "100%",
+    },
+    colorBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+        marginBottom: 6,
+        backgroundColor: "#777",
+    },
+    badgeText: {
+        color: "#fff",
+        fontWeight: "600",
+        marginRight: 6,
+    },
+    badgeClose: {
+        color: "rgba(255,255,255,0.8)",
+        fontSize: 14,
+    },
+
 });
 
 export default AddClothingItemScreen;

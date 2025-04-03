@@ -14,5 +14,5 @@ public class ClothingCategory {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;  // Ex: "Top", "Pants", "Shoes", "Hat"
+    private String name;
 }

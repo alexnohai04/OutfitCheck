@@ -1,12 +1,13 @@
 import React from "react";
 import { View, Image, StyleSheet } from "react-native";
 
-const CATEGORY_ORDER = ["Hat", "Top", "Pants", "Shoes"];
+const CATEGORY_ORDER = ["Headwear", "Topwear", "Bottomwear", "Footwear", "FullBodywear"];
 const CATEGORY_IDS = {
-    Hat: 4,
-    Top: 1,
-    Pants: 2,
-    Shoes: 3,
+    Headwear: 4,
+    Topwear: 1,
+    Bottomwear: 2,
+    Footwear: 3,
+    FullBodywear: 5,
 };
 
 const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style }) => {
@@ -25,7 +26,7 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style 
                     );
                     if (!items.length) return null;
 
-                    const isTopGroup = category === "Top";
+                    const isTopGroup = category === "Topwear";
 
                     return (
                         <View
@@ -67,7 +68,7 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style 
                             ) : (
                                 items.map((item) => {
                                     const isSmall =
-                                        category === "Hat" || category === "Shoes";
+                                        category === "Headwear" || category === "Footwear";
                                     const size = isSmall ? smallSize : imageSize;
 
                                     return (
