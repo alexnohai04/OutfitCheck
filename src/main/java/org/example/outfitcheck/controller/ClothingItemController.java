@@ -30,6 +30,7 @@ public class ClothingItemController {
                     request.getCategoryId(),
                     request.getColors(),
                     request.getMaterial(),
+                    request.getBrand(),
                     request.getImageUrl()
             );
             return ResponseEntity.ok(savedItem);
@@ -46,7 +47,7 @@ public class ClothingItemController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(
-                    new VisionAnalysisResponse("error.webp", e.getMessage(), new ArrayList<>())
+                    new VisionAnalysisResponse("error.webp", e.getMessage(), new ArrayList<>(), null)
             );
         }
     }

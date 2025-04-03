@@ -26,6 +26,9 @@ public class ClothingItem {
     @Column(nullable = true)
     private String material;  // Ex: "Cotton"
 
+    @Column(nullable = true)
+    private String brand;  // Ex: "Cotton"
+
     private String imageUrl;  // URL către imaginea scanată
 
     @ManyToOne(fetch = FetchType.EAGER)

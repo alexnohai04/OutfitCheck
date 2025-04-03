@@ -24,7 +24,7 @@ import Toast from "react-native-toast-message";
 const AddClothingItemScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
-    const { imageUrl, suggestedCategory, topColors = [] } = route.params || {};
+    const { imageUrl, suggestedCategory, topColors = [], brand: suggestedBrand = "" } = route.params || {};
     const { userId } = useContext(UserContext);
 
     const [previewBase64, setPreviewBase64] = useState(null);
@@ -32,10 +32,12 @@ const AddClothingItemScreen = () => {
     const [newColorInput, setNewColorInput] = useState("");
     const [material, setMaterial] = useState("");
     const [category, setCategory] = useState(null);
+    const [brand, setBrand] = useState(suggestedBrand);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    console.log(route.params);
     const getContrastingTextColor = (hex) => {
         const cleanHex = hex.replace("#", "");
         const r = parseInt(cleanHex.slice(0, 2), 16);
@@ -83,7 +85,9 @@ const AddClothingItemScreen = () => {
             const matched = items.find(cat => cat.label.toLowerCase() === suggestedCategory.toLowerCase());
             if (matched) setCategory(matched.value);
         }
-    }, [topColors, suggestedCategory, items]);
+
+
+    }, [topColors, suggestedCategory, items, suggestedBrand]);
 
     const removeColor = (colorName) => {
         setColors(prev => prev.filter(c => c !== colorName));
@@ -114,6 +118,7 @@ const AddClothingItemScreen = () => {
                 categoryId: category,
                 colors,
                 material,
+                brand,
                 imageUrl
             });
 
@@ -213,6 +218,19 @@ const AddClothingItemScreen = () => {
                         />
                     )}
 
+
+                    {suggestedBrand && (
+                        <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
+                            Suggested brand: {suggestedBrand}
+                        </Text>
+                    )}
+                    <TextInput
+                        placeholder="Brand"
+                        placeholderTextColor="#A0A0A0"
+                        value={brand}
+                        onChangeText={setBrand}
+                        style={styles.input}
+                    />
 
 
                     <TextInput

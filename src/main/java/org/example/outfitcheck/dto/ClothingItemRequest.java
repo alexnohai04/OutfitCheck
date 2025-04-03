@@ -12,5 +12,6 @@ public class ClothingItemRequest {
     private Long categoryId;
     private List<String> colors;
     private String material;
+    private String brand;
     private String imageUrl;
 }

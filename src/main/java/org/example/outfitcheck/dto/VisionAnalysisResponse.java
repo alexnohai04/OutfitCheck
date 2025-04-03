@@ -15,5 +15,6 @@ public class VisionAnalysisResponse {
     private String fileName;
     private String suggestedCategory; // + getter & setter
     private List<ColorInfo> topColors;
+    private String brand;
 
 }

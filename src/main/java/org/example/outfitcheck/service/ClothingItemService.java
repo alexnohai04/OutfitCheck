@@ -44,7 +44,7 @@ public class ClothingItemService {
 
         this.colorMapperService = colorMapperService;
     }
-    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, List colors, String material, String imageUrl) {
+    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, List colors, String material, String brand, String imageUrl) {
         Optional<ClothingCategory> categoryOpt = categoryRepository.findById(categoryId);
         Optional<User> userOpt = userRepository.findById(userId);
 
@@ -162,13 +162,13 @@ public class ClothingItemService {
             Map<String, Object> visionData = visionService.detectLabelsAndColorsFromFilename(fileName);
             List<String> labels = (List<String>) visionData.get("labels");
             List<String> colors = (List<String>) visionData.get("colors");
+            String brand = (String) visionData.get("brand");
 
             // ✅ Mapăm categoria
             String suggestedCategory = categoryMapperService.mapLabelToCategory(labels);
             List<ColorInfo> topColors = colorMapperService.mapAndGroupColors(colors);
-            Set<String> seenNames = new HashSet<>(); // pentru unicitate
 
-            return new VisionAnalysisResponse(fileName, suggestedCategory, topColors);
+            return new VisionAnalysisResponse(fileName, suggestedCategory, topColors, brand);
 
         } catch (IOException e) {
             throw new RuntimeException("Eroare la salvarea imaginii temporare", e);

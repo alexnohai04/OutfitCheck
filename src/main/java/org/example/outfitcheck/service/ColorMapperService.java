@@ -8,58 +8,64 @@ import java.util.*;
 @Service
 public class ColorMapperService {
 
-    private static final Map<String, String> standardColors = new HashMap<>();
+    private static final Map<String, String> STANDARD_COLORS = Map.ofEntries(
+            Map.entry("Black", "#000000"),
+            Map.entry("White", "#FFFFFF"),
+            Map.entry("Red", "#FF0000"),
+            Map.entry("Yellow", "#FFFF00"),
+            Map.entry("Blue", "#0000FF"),
+            Map.entry("Green", "#008000"),
+            Map.entry("Orange", "#FFA500"),
+            Map.entry("Pink", "#FFC0CB"),
+            Map.entry("Brown", "#A52A2A"),
+            Map.entry("Gray", "#808080"),
+            Map.entry("Purple", "#800080"),
+            Map.entry("Beige", "#F5F5DC")
+    );
 
-    static {
-        standardColors.put("Black", "#000000");
-        standardColors.put("White", "#FFFFFF");
-        standardColors.put("Red", "#FF0000");
-        standardColors.put("Lime", "#00FF00");
-        standardColors.put("Blue", "#0000FF");
-        standardColors.put("Yellow", "#FFFF00");
-        standardColors.put("Cyan", "#00FFFF");
-        standardColors.put("Magenta", "#FF00FF");
-        standardColors.put("Gray", "#808080");
-        standardColors.put("Silver", "#C0C0C0");
-        standardColors.put("Maroon", "#800000");
-        standardColors.put("Olive", "#808000");
-        standardColors.put("Green", "#008000");
-        standardColors.put("Purple", "#800080");
-        standardColors.put("Teal", "#008080");
-        standardColors.put("Navy", "#000080");
-        standardColors.put("Brown", "#A52A2A");
-        standardColors.put("Orange", "#FFA500");
-        standardColors.put("Pink", "#FFC0CB");
-        standardColors.put("Beige", "#F5F5DC");
-    }
+    private static final Set<String> PRIORITY_COLORS = Set.of("Black", "White", "Red", "Yellow", "Blue");
 
     public String mapHexToNearestColorName(String hex) {
         int[] targetRGB = hexToRGB(hex);
         String nearestColor = hex;
         double minDistance = Double.MAX_VALUE;
 
-        for (Map.Entry<String, String> entry : standardColors.entrySet()) {
+        for (Map.Entry<String, String> entry : STANDARD_COLORS.entrySet()) {
+            String colorName = entry.getKey();
             int[] rgb = hexToRGB(entry.getValue());
             double distance = colorDistance(targetRGB, rgb);
+
+            // Bias pozitiv: favorizează culorile prioritare dacă sunt aproape
+            if (PRIORITY_COLORS.contains(colorName) && distance < 80) {
+                return colorName;
+            }
+
+            // Bias negativ: penalizează culorile neutre
+            if (colorName.equals("Gray") || colorName.equals("Silver")) {
+                distance *= 1.2; // penalizare 20%
+            }
+
             if (distance < minDistance) {
                 minDistance = distance;
-                nearestColor = entry.getKey();
+                nearestColor = colorName;
             }
         }
 
         return nearestColor;
     }
 
+
     public String getStandardHex(String colorName) {
-        return standardColors.getOrDefault(colorName, "#999999");
+        return STANDARD_COLORS.getOrDefault(colorName, "#999999");
     }
 
     private int[] hexToRGB(String hex) {
         hex = hex.replace("#", "");
-        int r = Integer.parseInt(hex.substring(0, 2), 16);
-        int g = Integer.parseInt(hex.substring(2, 4), 16);
-        int b = Integer.parseInt(hex.substring(4, 6), 16);
-        return new int[]{r, g, b};
+        return new int[]{
+                Integer.parseInt(hex.substring(0, 2), 16),
+                Integer.parseInt(hex.substring(2, 4), 16),
+                Integer.parseInt(hex.substring(4, 6), 16)
+        };
     }
 
     private double colorDistance(int[] rgb1, int[] rgb2) {
@@ -71,23 +77,15 @@ public class ColorMapperService {
     }
 
     public List<ColorInfo> mapAndGroupColors(List<String> hexColors) {
-        Map<String, List<ColorInfo>> grouped = new HashMap<>();
+        Map<String, ColorInfo> uniqueColorMap = new LinkedHashMap<>();
 
         for (String hex : hexColors) {
             String name = mapHexToNearestColorName(hex);
-            grouped.computeIfAbsent(name, k -> new ArrayList<>()).add(new ColorInfo(hex, name));
-        }
-
-        List<ColorInfo> finalColors = new ArrayList<>();
-
-        for (Map.Entry<String, List<ColorInfo>> entry : grouped.entrySet()) {
-            if (entry.getValue().size() >= 2 && !entry.getKey().equals(entry.getValue().get(0).getName())) {
-                finalColors.add(new ColorInfo(getStandardHex(entry.getKey()), entry.getKey()));
-            } else {
-                finalColors.addAll(entry.getValue());
+            if (!uniqueColorMap.containsKey(name)) {
+                uniqueColorMap.put(name, new ColorInfo(getStandardHex(name), name));
             }
         }
 
-        return finalColors.stream().limit(3).toList();
+        return uniqueColorMap.values().stream().limit(3).toList();
     }
 }

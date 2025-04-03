@@ -27,6 +27,8 @@ public class CategoryMapperService {
             Map.entry("crop top", "Topwear"),
             Map.entry("long sleeve", "Topwear"),
             Map.entry("short sleeve", "Topwear"),
+            Map.entry("sleeve", "Topwear"),
+            Map.entry("hood", "Topwear"),
 
             // 👖 Bottomwear
             Map.entry("jeans", "Bottomwear"),
@@ -73,7 +75,7 @@ public class CategoryMapperService {
             Map.entry("beret", "Headwear"),
             Map.entry("fedora", "Headwear"),
             Map.entry("headband", "Headwear"),
-            Map.entry("hood", "Headwear"),
+            //Map.entry("hood", "Headwear"),
             Map.entry("visor", "Headwear"),
             Map.entry("turban", "Headwear"),
             Map.entry("helmet", "Headwear")

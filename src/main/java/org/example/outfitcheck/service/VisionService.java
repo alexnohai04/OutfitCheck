@@ -11,10 +11,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class VisionService {
@@ -25,7 +22,7 @@ public class VisionService {
     private static final String UPLOADS_FOLDER = "uploads/clothing";
 
     public Map<String, Object> detectLabelsAndColorsFromFilename(String filename) throws Exception {
-        Path imagePath = Paths.get("uploads/clothing").resolve(filename).normalize();
+        Path imagePath = Paths.get(UPLOADS_FOLDER).resolve(filename).normalize();
 
         if (!Files.exists(imagePath)) {
             throw new FileNotFoundException("Fișierul nu există: " + imagePath);
@@ -44,18 +41,20 @@ public class VisionService {
 
         List<String> labels = new ArrayList<>();
         List<String> colors = new ArrayList<>();
+        String brand = null;
 
         try (ImageAnnotatorClient vision = ImageAnnotatorClient.create(settings)) {
             ByteString imgBytes = ByteString.readFrom(imageInputStream);
             Image img = Image.newBuilder().setContent(imgBytes).build();
 
-            // Adăugăm ambele tipuri de analiză
             Feature labelDetection = Feature.newBuilder().setType(Feature.Type.LABEL_DETECTION).build();
             Feature colorDetection = Feature.newBuilder().setType(Feature.Type.IMAGE_PROPERTIES).build();
+            Feature logoDetection = Feature.newBuilder().setType(Feature.Type.LOGO_DETECTION).build();
 
             AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
                     .addFeatures(labelDetection)
                     .addFeatures(colorDetection)
+                    .addFeatures(logoDetection)
                     .setImage(img)
                     .build();
 
@@ -66,7 +65,7 @@ public class VisionService {
                 throw new RuntimeException("Eroare Vision API: " + res.getError().getMessage());
             }
 
-            // Etichete
+            // Etichete generale
             for (EntityAnnotation annotation : res.getLabelAnnotationsList()) {
                 labels.add(annotation.getDescription());
             }
@@ -80,13 +79,21 @@ public class VisionService {
                     colors.add(String.format("#%02x%02x%02x", red, green, blue));
                 }
             }
+
+            // Logo - doar dacă scorul este peste 0.75
+            if (!res.getLogoAnnotationsList().isEmpty()) {
+                EntityAnnotation firstLogo = res.getLogoAnnotationsList().getFirst();
+//                if (firstLogo.getScore() >= 0.75) {
+                    brand = firstLogo.getDescription();
+//                }
+            }
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("labels", labels);
         result.put("colors", colors);
+        result.put("brand", brand); // doar un logo, sau null
 
         return result;
     }
-
 }
