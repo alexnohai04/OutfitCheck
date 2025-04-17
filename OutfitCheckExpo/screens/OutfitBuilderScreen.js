@@ -152,7 +152,7 @@ const OutfitBuilderScreen = () => {
                 text1: "Outfit saved!",
                 text2: "You can now view it in My Outfits.",
             });
-            navigation.navigate("UserOutfits");
+            navigation.goBack();
         } catch (error) {
             console.error("❌ Error saving outfit:", error);
             Toast.show({

@@ -29,6 +29,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+
     @JsonManagedReference
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClothingItem> clothingItems;

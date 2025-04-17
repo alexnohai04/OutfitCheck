@@ -44,7 +44,7 @@ public class ClothingItemService {
 
         this.colorMapperService = colorMapperService;
     }
-    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, List colors, String material, String brand, String imageUrl) {
+    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, List colors, String material, String brand, String imageUrl, String link) {
         Optional<ClothingCategory> categoryOpt = categoryRepository.findById(categoryId);
         Optional<User> userOpt = userRepository.findById(userId);
 
@@ -60,6 +60,8 @@ public class ClothingItemService {
         clothingItem.setMaterial(material);
         clothingItem.setCategory(categoryOpt.get());
         clothingItem.setOwner(userOpt.get());
+        clothingItem.setBrand(brand);
+        clothingItem.setLink(link);
         //clothingItem.setImageUrl(imageUrl); // direct linkul complet
 
         clothingItem = clothingItemRepository.save(clothingItem);
@@ -160,7 +162,7 @@ public class ClothingItemService {
             sendToFlaskRemoveBg(filePath.toString());
 
             Map<String, Object> visionData = visionService.detectLabelsAndColorsFromFilename(fileName);
-            List<String> labels = (List<String>) visionData.get("labels");
+            List<String> labels = (List<String>) visionData.get("objects");
             List<String> colors = (List<String>) visionData.get("colors");
             String brand = (String) visionData.get("brand");
 

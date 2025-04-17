@@ -29,6 +29,7 @@ public class CategoryMapperService {
             Map.entry("short sleeve", "Topwear"),
             Map.entry("sleeve", "Topwear"),
             Map.entry("hood", "Topwear"),
+            Map.entry("outerwear", "Topwear"),
 
             // 👖 Bottomwear
             Map.entry("jeans", "Bottomwear"),

@@ -29,17 +29,17 @@ public class VisionService {
         }
 
         try (InputStream inputStream = Files.newInputStream(imagePath)) {
-            return detectLabelsAndColors(inputStream);
+            return detectData(inputStream);
         }
     }
 
-    private Map<String, Object> detectLabelsAndColors(InputStream imageInputStream) throws Exception {
+    private Map<String, Object> detectData(InputStream imageInputStream) throws Exception {
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(credentialsPath));
         ImageAnnotatorSettings settings = ImageAnnotatorSettings.newBuilder()
                 .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                 .build();
 
-        List<String> labels = new ArrayList<>();
+        List<String> detectedObjects = new ArrayList<>();
         List<String> colors = new ArrayList<>();
         String brand = null;
 
@@ -47,12 +47,12 @@ public class VisionService {
             ByteString imgBytes = ByteString.readFrom(imageInputStream);
             Image img = Image.newBuilder().setContent(imgBytes).build();
 
-            Feature labelDetection = Feature.newBuilder().setType(Feature.Type.LABEL_DETECTION).build();
+            Feature objectDetection = Feature.newBuilder().setType(Feature.Type.OBJECT_LOCALIZATION).build();
             Feature colorDetection = Feature.newBuilder().setType(Feature.Type.IMAGE_PROPERTIES).build();
             Feature logoDetection = Feature.newBuilder().setType(Feature.Type.LOGO_DETECTION).build();
 
             AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
-                    .addFeatures(labelDetection)
+                    .addFeatures(objectDetection)
                     .addFeatures(colorDetection)
                     .addFeatures(logoDetection)
                     .setImage(img)
@@ -65,9 +65,9 @@ public class VisionService {
                 throw new RuntimeException("Eroare Vision API: " + res.getError().getMessage());
             }
 
-            // Etichete generale
-            for (EntityAnnotation annotation : res.getLabelAnnotationsList()) {
-                labels.add(annotation.getDescription());
+            // Obiecte detectate (înlocuim label detection)
+            for (LocalizedObjectAnnotation obj : res.getLocalizedObjectAnnotationsList()) {
+                detectedObjects.add(obj.getName());
             }
 
             // Culori dominante
@@ -80,19 +80,17 @@ public class VisionService {
                 }
             }
 
-            // Logo - doar dacă scorul este peste 0.75
+            // Brand (logo)
             if (!res.getLogoAnnotationsList().isEmpty()) {
-                EntityAnnotation firstLogo = res.getLogoAnnotationsList().getFirst();
-//                if (firstLogo.getScore() >= 0.75) {
-                    brand = firstLogo.getDescription();
-//                }
+                EntityAnnotation firstLogo = res.getLogoAnnotationsList().get(0);
+                brand = firstLogo.getDescription();
             }
         }
 
         Map<String, Object> result = new HashMap<>();
-        result.put("labels", labels);
+        result.put("objects", detectedObjects);
         result.put("colors", colors);
-        result.put("brand", brand); // doar un logo, sau null
+        result.put("brand", brand);
 
         return result;
     }

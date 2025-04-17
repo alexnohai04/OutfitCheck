@@ -20,6 +20,7 @@ import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import { processClothingItemAfterBgRemoval } from "../utils/imageUtils";
 import Toast from "react-native-toast-message";
+import namer from "color-namer";
 
 const AddClothingItemScreen = () => {
     const navigation = useNavigation();
@@ -34,10 +35,10 @@ const AddClothingItemScreen = () => {
     const [category, setCategory] = useState(null);
     const [brand, setBrand] = useState(suggestedBrand);
     const [open, setOpen] = useState(false);
+    const [link, setLink] = useState("");
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    console.log(route.params);
     const getContrastingTextColor = (hex) => {
         const cleanHex = hex.replace("#", "");
         const r = parseInt(cleanHex.slice(0, 2), 16);
@@ -46,7 +47,6 @@ const AddClothingItemScreen = () => {
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
         return luminance > 186 ? "#000" : "#fff";
     };
-
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -62,7 +62,6 @@ const AddClothingItemScreen = () => {
                 Alert.alert("Error", "Unable to load categories.");
             }
         };
-
         fetchCategories();
     }, []);
 
@@ -78,25 +77,27 @@ const AddClothingItemScreen = () => {
 
     useEffect(() => {
         if (topColors.length > 0 && colors.length === 0) {
-            setColors(topColors.map(c => c.name));
+            const translated = topColors.map(c => {
+                const name = namer(c.hex).ntc[0].name;
+                return { name, hex: c.hex };
+            });
+            setColors(translated);
         }
 
         if (suggestedCategory && items.length > 0 && !category) {
             const matched = items.find(cat => cat.label.toLowerCase() === suggestedCategory.toLowerCase());
             if (matched) setCategory(matched.value);
         }
-
-
-    }, [topColors, suggestedCategory, items, suggestedBrand]);
+    }, [topColors, suggestedCategory, items]);
 
     const removeColor = (colorName) => {
-        setColors(prev => prev.filter(c => c !== colorName));
+        setColors(prev => prev.filter(c => c.name !== colorName));
     };
 
     const addNewColor = () => {
         const trimmed = newColorInput.trim();
-        if (trimmed && !colors.includes(trimmed)) {
-            setColors(prev => [...prev, trimmed]);
+        if (trimmed && !colors.find(c => c.name === trimmed)) {
+            setColors(prev => [...prev, { name: trimmed, hex: "#999999" }]); // hex default
             setNewColorInput("");
         }
     };
@@ -111,15 +112,35 @@ const AddClothingItemScreen = () => {
             });
         }
 
+        if (link?.trim()) {
+            try {
+                const parsed = new URL(link);
+                if (!["http:", "https:"].includes(parsed.protocol)) {
+                    return Toast.show({
+                        type: 'error',
+                        text1: 'Invalid link. Only http and https are allowed.',
+                        position: 'top',
+                    });
+                }
+            } catch {
+                return Toast.show({
+                    type: 'error',
+                    text1: 'Please enter a valid URL.',
+                    position: 'top',
+                });
+            }
+        }
+
         setLoading(true);
         try {
             const response = await apiClient.post(API_URLS.ADD_CLOTHING, {
                 userId,
                 categoryId: category,
-                colors,
+                colors: colors.map(c => c.name),
                 material,
                 brand,
-                imageUrl
+                imageUrl,
+                link
             });
 
             if (response.status === 200 || response.status === 201) {
@@ -161,19 +182,17 @@ const AddClothingItemScreen = () => {
                         Detected colors:
                     </Text>
                     <View style={styles.colorListWrap}>
-                        {colors.map((name, idx) => {
-                            const hex = topColors.find(c => c.name === name)?.hex || "#999";
-                            return (
-                                <View key={idx} style={[styles.colorBadge, { backgroundColor: hex }]}>
-                                    <Text style={[styles.badgeText, { color: getContrastingTextColor(hex) }]}>{name}</Text>
-                                    <TouchableOpacity onPress={() => removeColor(name)}>
-                                        <Text style={[styles.badgeClose, { color: getContrastingTextColor(hex) }]}>✕</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            );
-                        })}
+                        {colors.map((color, idx) => (
+                            <View key={idx} style={[styles.colorBadge, { backgroundColor: color.hex }]}>
+                                <Text style={[styles.badgeText, { color: getContrastingTextColor(color.hex) }]}>
+                                    {color.name}
+                                </Text>
+                                <TouchableOpacity onPress={() => removeColor(color.name)}>
+                                    <Text style={[styles.badgeClose, { color: getContrastingTextColor(color.hex) }]}>✕</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ))}
                     </View>
-
 
                     <View style={styles.addColorRow}>
                         <TextInput
@@ -188,12 +207,12 @@ const AddClothingItemScreen = () => {
                         </TouchableOpacity>
                     </View>
 
-
                     {suggestedCategory && (
                         <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
                             Suggested category: {suggestedCategory}
                         </Text>
                     )}
+
                     {loading ? (
                         <ActivityIndicator size="large" color="#FF6B6B" />
                     ) : (
@@ -218,20 +237,18 @@ const AddClothingItemScreen = () => {
                         />
                     )}
 
-
-                    {suggestedBrand && (
+                    {brand && (
                         <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
-                            Suggested brand: {suggestedBrand}
+                            Suggested brand: {brand}
                         </Text>
                     )}
-                    <TextInput
-                        placeholder="Brand"
-                        placeholderTextColor="#A0A0A0"
-                        value={brand}
-                        onChangeText={setBrand}
-                        style={styles.input}
-                    />
-
+                        <TextInput
+                            placeholder="Brand"
+                            placeholderTextColor="#A0A0A0"
+                            value={brand}
+                            onChangeText={setBrand}
+                            style={styles.input}
+                        />
 
                     <TextInput
                         placeholder="Material"
@@ -240,6 +257,13 @@ const AddClothingItemScreen = () => {
                         onChangeText={setMaterial}
                         style={styles.input}
                     />
+                    <TextInput
+                        value={link}
+                        onChangeText={setLink}
+                        placeholder="Link către produs (opțional)"
+                        style={styles.input}
+                    />
+
 
                     <TouchableOpacity onPress={handleSave} style={styles.button}>
                         <Text style={styles.buttonText}>Save Item</Text>
@@ -249,6 +273,7 @@ const AddClothingItemScreen = () => {
         </TouchableWithoutFeedback>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {

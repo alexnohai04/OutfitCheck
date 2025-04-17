@@ -31,6 +31,8 @@ public class ClothingItem {
 
     private String imageUrl;  // URL către imaginea scanată
 
+    private String link; // URL catre website-ul de unde a fost cumparat
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private ClothingCategory category;

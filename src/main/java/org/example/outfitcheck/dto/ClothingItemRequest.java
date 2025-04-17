@@ -14,4 +14,5 @@ public class ClothingItemRequest {
     private String material;
     private String brand;
     private String imageUrl;
+    private String link;
 }

@@ -108,7 +108,7 @@ const OutfitDetailsScreen = () => {
             <Text style={globalStyles.title}>{outfit.name}</Text>
 
             <View style={styles.previewContainer}>
-                    <OutfitPreview clothingItems={outfit.clothingItems} size="large" />
+                    <OutfitPreview clothingItems={outfit.clothingItems} size="large" enableTooltip/>
             </View>
                 <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
                     <Text style={globalStyles.deleteText}>Delete</Text>

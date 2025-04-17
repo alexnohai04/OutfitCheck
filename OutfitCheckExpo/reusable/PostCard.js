@@ -136,7 +136,7 @@ const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete }) => {
 
                 <View style={styles.carouselItem}>
                     {clothingItems ? (
-                        <OutfitPreview clothingItems={clothingItems} size="medium" />
+                        <OutfitPreview clothingItems={clothingItems} size="medium" enableTooltip/>
                     ) : (
                         <ActivityIndicator size="small" color="#FF6B6B" />
                     )}
@@ -196,6 +196,8 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     username: {
         color: "#FFFFFF",

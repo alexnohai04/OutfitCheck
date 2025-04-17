@@ -20,6 +20,7 @@ import globalStyles from "../styles/globalStyles";
 import { processClothingItems } from "../utils/imageUtils";
 import Icon from "react-native-vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
+import {Link} from "expo-router";
 
 const ClothingItemsScreen = () => {
     const navigation = useNavigation();
@@ -105,6 +106,12 @@ const ClothingItemsScreen = () => {
                     <Text style={styles.itemText}>Colors: {item.colors.join(', ')}</Text>
                     <Text style={styles.itemText}>Material: {item.material}</Text>
                     <Text style={styles.itemText}>Category: {item.category.name}</Text>
+                    <Text style={styles.itemText}>Brand: {item.brand}</Text>
+                    {item.link ? (
+                        <Link style={styles.itemLink} href={item.link}>Website: {item.link}</Link>
+                    ): (
+                    <Text style={styles.itemText}>No Link</Text>
+                    )}
                 </View>
             </View>
         </Swipeable>
@@ -252,6 +259,11 @@ const styles = StyleSheet.create({
     itemText: {
         fontSize: 16,
         color: "#FFFFFF",
+        marginBottom: 5,
+    },
+    itemLink: {
+        fontSize: 16,
+        color: "#FF6B6B",
         marginBottom: 5,
     },
 });
