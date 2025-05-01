@@ -32,7 +32,8 @@ public class ClothingItemController {
                     request.getMaterial(),
                     request.getBrand(),
                     request.getImageUrl(),
-                    request.getLink()
+                    request.getLink(),
+                    request.getCareSymbols()
             );
             return ResponseEntity.ok(savedItem);
         } catch (IllegalArgumentException e) {

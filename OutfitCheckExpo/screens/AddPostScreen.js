@@ -1,53 +1,67 @@
-import React, { useState, useEffect, useContext } from "react";
+// AddPostScreen.js
+import React, { useState, useEffect, useContext, useRef } from "react";
 import {
     View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Image,
-    KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ActivityIndicator
+    KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated
 } from "react-native";
 import * as ImageManipulator from "expo-image-manipulator";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { UserContext } from "../UserContext";
 import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import Toast from "react-native-toast-message";
-import { useRoute } from "@react-navigation/native";
-
+import SelectOutfitScreen from "../screens/SelectOutfitScreen";
 
 const AddPostScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
-    const { imageUri: initialImageUri } = route.params || {};
-
     const { userId } = useContext(UserContext);
 
+    const initialImageUri = route.params?.imageUri ?? null;
     const [caption, setCaption] = useState("");
     const [hashtags, setHashtags] = useState("");
     const [outfitId, setOutfitId] = useState(null);
-    const [imageUri, setImageUri] = useState(initialImageUri || null);
-    const [open, setOpen] = useState(false);
-    const [items, setItems] = useState([]);
+    const [imageUri, setImageUri] = useState(initialImageUri);
     const [loading, setLoading] = useState(false);
+    const [selectOutfitModalVisible, setSelectOutfitModalVisible] = useState(false);
 
-    useEffect(() => {
-        const fetchOutfits = async () => {
-            try {
-                const response = await apiClient.get(`${API_URLS.GET_OUTFITS_BY_USER}/${userId}`);
-                const outfits = response.data;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(600)).current;
 
-                const formatted = outfits.map((outfit) => ({
-                    label: `Outfit #${outfit.id}`,
-                    value: outfit.id
-                }));
+    const openSelectOutfitModal = () => {
+        setSelectOutfitModalVisible(true);
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.spring(slideAnim, {
+                toValue: 0,
+                useNativeDriver: true,
+                friction: 8,
+                tension: 80,
+            }),
+        ]).start();
+    };
 
-                setItems(formatted);
-            } catch (error) {
-                console.error("Error loading outfits:", error.response?.data || error.message);
-                Alert.alert("Error", "Unable to load outfits.");
-            }
-        };
-
-        fetchOutfits();
-    }, [userId]);
+    const closeSelectOutfitModal = () => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 600,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+        ]).start(() => {
+            setSelectOutfitModalVisible(false);
+        });
+    };
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -61,14 +75,6 @@ const AddPostScreen = () => {
         }
     };
 
-    const handleSelectOutfit = () => {
-        navigation.navigate("SelectOutfit", {
-            onGoBack: (selectedOutfitId) => {
-                setOutfitId(selectedOutfitId);
-            }
-        });
-    };
-
     const handleSubmit = async () => {
         if (!imageUri || !outfitId || !caption) {
             Alert.alert("Missing info", "Image, caption and outfit are required.");
@@ -78,7 +84,6 @@ const AddPostScreen = () => {
         setLoading(true);
 
         try {
-            // 🔄 Redimensionare + compresie
             const resizedImage = await ImageManipulator.manipulateAsync(
                 imageUri,
                 [{ resize: { width: 1080, height: 1080 } }],
@@ -89,7 +94,7 @@ const AddPostScreen = () => {
             formData.append("userId", userId);
             formData.append("outfitId", outfitId);
             formData.append("caption", caption);
-            formData.append("hashtags", hashtags); // raw string
+            formData.append("hashtags", hashtags);
             formData.append("image", {
                 uri: resizedImage.uri,
                 name: "post_image.webp",
@@ -97,9 +102,7 @@ const AddPostScreen = () => {
             });
 
             const response = await apiClient.post(API_URLS.ADD_POST, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data"
-                }
+                headers: { "Content-Type": "multipart/form-data" }
             });
 
             if (response.status === 201 || response.status === 200) {
@@ -109,7 +112,8 @@ const AddPostScreen = () => {
                     text2: "Your outfit post is live!",
                     position: "top"
                 });
-                navigation.goBack();
+                navigation.navigate('Home', { screen: 'Feed' });
+
             } else {
                 Alert.alert("Error", response.data.message || "Something went wrong.");
             }
@@ -120,7 +124,6 @@ const AddPostScreen = () => {
             setLoading(false);
         }
     };
-
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -158,17 +161,42 @@ const AddPostScreen = () => {
                     />
 
                     <Text style={styles.label}>Selected Outfit:</Text>
-                    <TouchableOpacity onPress={handleSelectOutfit} style={styles.outfitSelector}>
+                    <TouchableOpacity onPress={openSelectOutfitModal} style={styles.outfitSelector}>
                         <Text style={styles.outfitSelectorText}>
                             {outfitId ? `Outfit #${outfitId}` : "Tap to choose outfit"}
                         </Text>
                     </TouchableOpacity>
 
-
                     <TouchableOpacity onPress={handleSubmit} style={styles.button}>
-                        <Text style={styles.buttonText}>Post Outfit</Text>
+                        <Text style={styles.buttonText}>{loading ? "Posting..." : "Post Outfit"}</Text>
                     </TouchableOpacity>
                 </View>
+
+                {selectOutfitModalVisible && (
+                    <View style={StyleSheet.absoluteFill}>
+                        <TouchableWithoutFeedback onPress={closeSelectOutfitModal}>
+                            <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]} />
+                        </TouchableWithoutFeedback>
+
+                        <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
+                            <View style={styles.dragBar} />
+                            <SelectOutfitScreen
+                                onClose={closeSelectOutfitModal}
+                                onOutfitLogged={(dateOrData, maybeData) => {
+                                    const outfitId = maybeData?.outfitId ?? dateOrData?.outfitId ?? null;
+
+                                    if (outfitId) {
+                                        setOutfitId(outfitId);
+                                        closeSelectOutfitModal();
+                                    } else {
+                                        console.warn("⚠️ outfitId not provided");
+                                    }
+                                }}
+
+                            />
+                        </Animated.View>
+                    </View>
+                )}
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );
@@ -232,33 +260,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
     },
-    dropdownContainer: {
-        width: "100%",
-        marginBottom: 20,
-    },
-    dropdown: {
-        backgroundColor: "#3A3A3A",
-        borderColor: "#444",
-    },
-    dropdownList: {
-        backgroundColor: "#3A3A3A",
-        borderColor: "#444",
-    },
-    placeholderText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    dropdownText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    dropdownLabel: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
     button: {
         backgroundColor: "#FF6B6B",
         paddingVertical: 12,
@@ -288,7 +289,28 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
     },
-
+    modalOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        height: '80%',
+        backgroundColor: '#1E1E1E',
+        padding: 24,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
+    dragBar: {
+        width: 60,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#888',
+        alignSelf: 'center',
+        marginBottom: 12,
+    },
 });
 
 export default AddPostScreen;

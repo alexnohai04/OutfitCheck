@@ -42,7 +42,8 @@ const ProfileScreen = () => {
             setProfileImage(image);
 
             const postsRes = await apiClient.get(API_URLS.GET_POSTS_BY_USER(userId, userId));
-            setPosts(postsRes.data);
+            setPosts(postsRes.data.sort((a, b) => b.id - a.id));
+
 
             const outfitsRes = await apiClient.get(`${API_URLS.GET_OUTFITS_BY_USER}/${userId}`);
             const processedOutfits = await Promise.all(
@@ -51,7 +52,8 @@ const ProfileScreen = () => {
                     return { ...outfit, clothingItems: processedItems };
                 })
             );
-            setOutfits(processedOutfits);
+            setOutfits(processedOutfits.sort((a, b) => b.id - a.id));
+
         } catch (error) {
             console.error("❌ Error fetching user:", error.response?.data || error.message);
         } finally {

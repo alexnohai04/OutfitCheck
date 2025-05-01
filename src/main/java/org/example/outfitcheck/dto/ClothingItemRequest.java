@@ -15,4 +15,5 @@ public class ClothingItemRequest {
     private String brand;
     private String imageUrl;
     private String link;
+    private List<String> careSymbols;
 }

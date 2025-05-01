@@ -44,7 +44,7 @@ public class ClothingItemService {
 
         this.colorMapperService = colorMapperService;
     }
-    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, List colors, String material, String brand, String imageUrl, String link) {
+    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, List<String> colors, String material, String brand, String imageUrl, String link, List<String> careSymbols) {
         Optional<ClothingCategory> categoryOpt = categoryRepository.findById(categoryId);
         Optional<User> userOpt = userRepository.findById(userId);
 
@@ -62,6 +62,7 @@ public class ClothingItemService {
         clothingItem.setOwner(userOpt.get());
         clothingItem.setBrand(brand);
         clothingItem.setLink(link);
+        clothingItem.setCareSymbols(careSymbols);
         //clothingItem.setImageUrl(imageUrl); // direct linkul complet
 
         clothingItem = clothingItemRepository.save(clothingItem);

@@ -37,6 +37,11 @@ public class ClothingItem {
     @JoinColumn(name = "category_id")
     private ClothingCategory category;
 
+    @ElementCollection
+    @CollectionTable(name = "clothing_item_care_symbols", joinColumns = @JoinColumn(name = "clothing_item_id"))
+    @Column(name = "symbol")
+    private List<String> careSymbols;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     @JsonBackReference  // 🚀 Permite serializarea `owner`, dar evită recursivitatea

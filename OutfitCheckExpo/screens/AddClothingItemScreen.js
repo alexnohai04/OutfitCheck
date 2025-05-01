@@ -21,13 +21,12 @@ import API_URLS from "../apiConfig";
 import { processClothingItemAfterBgRemoval } from "../utils/imageUtils";
 import Toast from "react-native-toast-message";
 import namer from "color-namer";
+import {Ionicons} from "@expo/vector-icons";
 
 const AddClothingItemScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { imageUrl, suggestedCategory, topColors = [], brand: suggestedBrand = "" } = route.params || {};
-    const { userId } = useContext(UserContext);
-
     const [previewBase64, setPreviewBase64] = useState(null);
     const [colors, setColors] = useState([]);
     const [newColorInput, setNewColorInput] = useState("");
@@ -102,7 +101,7 @@ const AddClothingItemScreen = () => {
         }
     };
 
-    const handleSave = async () => {
+    const handleNext = () => {
         if (!imageUrl) return Alert.alert("Error", "No image available!");
         if (colors.length === 0 || !category) {
             return Toast.show({
@@ -131,35 +130,15 @@ const AddClothingItemScreen = () => {
             }
         }
 
-        setLoading(true);
-        try {
-            const response = await apiClient.post(API_URLS.ADD_CLOTHING, {
-                userId,
-                categoryId: category,
-                colors: colors.map(c => c.name),
-                material,
-                brand,
-                imageUrl,
-                link
-            });
-
-            if (response.status === 200 || response.status === 201) {
-                Toast.show({
-                    type: 'success',
-                    text1: 'Clothing item saved successfully!',
-                    position: 'top',
-                });
-                navigation.replace("ClothingItems");
-            } else {
-                Alert.alert("Error", response.data.message || "Failed to save item.");
-            }
-        } catch (error) {
-            Alert.alert("Error", "An issue occurred while saving.");
-        } finally {
-            setLoading(false);
-        }
+        navigation.navigate("AddCareInstructionsScreen", {
+            categoryId: category,
+            colors: colors.map(c => c.name),
+            material,
+            brand,
+            imageUrl,
+            link
+        });
     };
-
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <KeyboardAvoidingView
@@ -168,8 +147,11 @@ const AddClothingItemScreen = () => {
                 style={styles.container}
             >
                 <View style={styles.innerContainer}>
-                    <Text style={styles.title}>Add Clothing Item</Text>
-
+                    <View style={styles.headerRow}>
+                        <View style={styles.sideSpacer} />
+                        <Text style={styles.title}>Add clothing item</Text>
+                        <Text style={styles.stepText}>1/2</Text>
+                    </View>
                     {previewBase64 ? (
                         <Image source={{ uri: previewBase64 }} style={styles.image} />
                     ) : (
@@ -243,16 +225,16 @@ const AddClothingItemScreen = () => {
                         </Text>
                     )}
                         <TextInput
-                            placeholder="Brand"
-                            placeholderTextColor="#A0A0A0"
+                            placeholder="Brand (optional)"
+                            //placeholderTextColor="#A0A0A0"
                             value={brand}
                             onChangeText={setBrand}
                             style={styles.input}
                         />
 
                     <TextInput
-                        placeholder="Material"
-                        placeholderTextColor="#A0A0A0"
+                        placeholder="Material (optional)"
+                        //placeholderTextColor="#A0A0A0"
                         value={material}
                         onChangeText={setMaterial}
                         style={styles.input}
@@ -260,15 +242,15 @@ const AddClothingItemScreen = () => {
                     <TextInput
                         value={link}
                         onChangeText={setLink}
-                        placeholder="Link către produs (opțional)"
+                        placeholder="Product link (optional)"
                         style={styles.input}
                     />
 
-
-                    <TouchableOpacity onPress={handleSave} style={styles.button}>
-                        <Text style={styles.buttonText}>Save Item</Text>
-                    </TouchableOpacity>
                 </View>
+
+                <TouchableOpacity onPress={handleNext} style={styles.button}>
+                    <Text style={styles.buttonText}>Next</Text>
+                </TouchableOpacity>
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );
@@ -284,20 +266,27 @@ const styles = StyleSheet.create({
     },
     innerContainer: {
         width: "90%",
+        height: "83%",
         alignItems: "center",
         backgroundColor: "#1E1E1E",
         paddingVertical: 20,
         borderRadius: 15,
         paddingHorizontal: 15,
+       // marginTop: 10
     },
     title: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: "bold",
         color: "#FFFFFF",
-        marginBottom: 20,
+        position: "absolute",
+        left: 0,
+        right: 0,
         textAlign: "center",
-        marginTop: Platform.OS === "ios" ? 50 : 30,
     },
+    sideSpacer: {
+        width: 50, // egal cu stepText pentru echilibru
+    },
+
     image: {
         width: 250,
         height: 250,
@@ -417,9 +406,9 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 10,
-        marginVertical: 10,
-        width: "100%",
+        width: "90%",
         alignItems: "center",
+        margin:10
     },
     buttonText: {
         color: "#FFFFFF",
@@ -450,6 +439,20 @@ const styles = StyleSheet.create({
     badgeClose: {
         color: "rgba(255,255,255,0.8)",
         fontSize: 14,
+    },
+    headerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        marginVertical: 10,
+        position: "relative",
+    },
+
+    stepText: {
+        color: "#aaa",
+        fontSize: 14,
+        fontWeight: "500",
     },
 
 });

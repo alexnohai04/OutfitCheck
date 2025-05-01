@@ -48,7 +48,7 @@ const UserProfileScreen = () => {
             const postsRes = await apiClient.get(API_URLS.GET_POSTS_BY_USER(otherUserId, currentUserId));
             setPosts(postsRes.data);
 
-            const outfitsRes = await apiClient.get(`${API_URLS.GET_OUTFITS_BY_USER}/${otherUserId}`);
+            const outfitsRes = await apiClient.get(`${API_URLS.GET_PUBLIC_OUTFITS_BY_USER}/${otherUserId}`);
             const processedOutfits = await Promise.all(
                 outfitsRes.data.map(async (outfit) => {
                     const processedItems = await processClothingItems(outfit.clothingItems);

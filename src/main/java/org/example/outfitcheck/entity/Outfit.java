@@ -28,4 +28,8 @@ public class Outfit {
             inverseJoinColumns = @JoinColumn(name = "clothing_item_id")
     )
     private List<ClothingItem> clothingItems;  // Lista hainelor din acest outfit
+
+    @Column(nullable = true)
+    private boolean publicVisible = false;
+
 }

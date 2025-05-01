@@ -1,6 +1,7 @@
 package org.example.outfitcheck.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.outfitcheck.config.JwtUtil;
 import org.example.outfitcheck.dto.PostRequestDTO;
 import org.example.outfitcheck.dto.PostResponseDTO;
 import org.example.outfitcheck.service.PostService;
@@ -19,6 +20,8 @@ import java.util.stream.Collectors;
 public class PostController {
 
     private final PostService postService;
+    private final JwtUtil jwtUtil;
+
 
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<PostResponseDTO> createPost(
@@ -60,9 +63,10 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<?> deletePost(
             @PathVariable Long postId,
-            @RequestParam Long userId
+            @RequestHeader("Authorization") String token
     ) {
         try {
+            Long userId = jwtUtil.extractUserId(token.replace("Bearer ", ""));
             postService.deletePost(postId, userId);
             return ResponseEntity.ok("Post deleted successfully.");
         } catch (RuntimeException e) {

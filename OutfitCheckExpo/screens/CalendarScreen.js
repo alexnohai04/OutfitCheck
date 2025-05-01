@@ -1,3 +1,4 @@
+// CalendarScreen.js
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
     View,
@@ -7,7 +8,6 @@ import {
     Animated,
     TouchableWithoutFeedback,
     ActivityIndicator,
-    ScrollView,
     Alert,
     TouchableOpacity
 } from 'react-native';
@@ -21,6 +21,7 @@ import apiClient from "../apiClient";
 import { processClothingItems } from "../utils/imageUtils";
 import OutfitPreview from "../reusable/OutfitPreview";
 import globalStyles from "../styles/globalStyles";
+import SelectOutfitScreen from "../screens/SelectOutfitScreen";
 
 const CalendarScreen = () => {
     const { userId } = useContext(UserContext);
@@ -28,12 +29,15 @@ const CalendarScreen = () => {
 
     const [selectedDate, setSelectedDate] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
+    const [selectOutfitModalVisible, setSelectOutfitModalVisible] = useState(false);
     const [outfitsByDate, setOutfitsByDate] = useState({});
     const [selectedOutfitImages, setSelectedOutfitImages] = useState([]);
     const [loadingImages, setLoadingImages] = useState(false);
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(300)).current;
+    const fadeAnimSelect = useRef(new Animated.Value(0)).current;
+    const slideAnimSelect = useRef(new Animated.Value(600)).current;
 
     const openModal = () => {
         setModalVisible(true);
@@ -43,10 +47,11 @@ const CalendarScreen = () => {
                 duration: 400,
                 useNativeDriver: true,
             }),
-            Animated.timing(slideAnim, {
+            Animated.spring(slideAnim, {
                 toValue: 0,
-                duration: 300,
                 useNativeDriver: true,
+                friction: 8,
+                tension: 20,
             }),
         ]).start();
     };
@@ -68,11 +73,42 @@ const CalendarScreen = () => {
         });
     };
 
+    const openSelectOutfitModal = () => {
+        setSelectOutfitModalVisible(true);
+        Animated.parallel([
+            Animated.timing(fadeAnimSelect, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.spring(slideAnimSelect, {
+                toValue: 0,
+                useNativeDriver: true,
+                friction: 8,
+                tension: 10,
+            }),
+        ]).start();
+    };
+
+    const closeSelectOutfitModal = () => {
+        Animated.parallel([
+            Animated.timing(fadeAnimSelect, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnimSelect, {
+                toValue: 600,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+        ]).start(() => {
+            setSelectOutfitModalVisible(false);
+        });
+    };
+
     useEffect(() => {
-        if (!userId) {
-            console.log("🔒 Skipping profile fetch: user not logged in.");
-            return;
-        }
+        if (!userId) return;
         const fetchOutfits = async () => {
             try {
                 const res = await apiClient.get(`${API_URLS.GET_LOGGED_OUTFITS_BY_USER}/${userId}`);
@@ -121,20 +157,7 @@ const CalendarScreen = () => {
     };
 
     const handleLogOutfit = () => {
-        closeModal();
-        navigation.navigate('SelectOutfit', {
-            date: selectedDate,
-            onGoBack: (date, data) => {
-                setOutfitsByDate(prev => ({
-                    ...prev,
-                    [date]: data
-                }));
-
-                if (date === selectedDate) {
-                    fetchOutfitImages(data.outfitId);
-                }
-            }
-        });
+        openSelectOutfitModal();
     };
 
     const confirmDelete = () => {
@@ -228,29 +251,47 @@ const CalendarScreen = () => {
                     </TouchableWithoutFeedback>
 
                     <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
-                        <View contentContainerStyle={{ alignItems: "center" }}>
-                            <Text style={styles.modalTitle}>{selectedDate}</Text>
-
-                            {outfit ? (
-                                loadingImages ? (
-                                    <ActivityIndicator size="large" color="#FF6B6B" style={{ marginVertical: 12 }} />
-                                ) : (
-                                    <View style={{ width: '100%', paddingHorizontal: 24, marginBottom: 50 }}>
-                                        <Swipeable renderRightActions={renderRightActions}>
-                                            <OutfitPreview clothingItems={selectedOutfitImages} />
-                                        </Swipeable>
-                                    </View>
-                                )
+                        <View style={globalStyles.dragBar} />
+                        <Text style={styles.modalTitle}>{selectedDate}</Text>
+                        {outfit ? (
+                            loadingImages ? (
+                                <ActivityIndicator size="large" color="#FF6B6B" style={{ marginVertical: 12 }} />
                             ) : (
-                                <>
-                                    <Text style={styles.modalText}>You haven't logged an outfit for this day.</Text>
-                                    <TouchableOpacity style={globalStyles.button} onPress={handleLogOutfit}>
-                                        <Text style={globalStyles.buttonText}>Log outfit</Text>
-                                    </TouchableOpacity>
-                                </>
-                            )}
+                                <View style={{ width: '100%', paddingHorizontal: 24, marginBottom: 50 }}>
+                                    <Swipeable renderRightActions={renderRightActions}>
+                                        <OutfitPreview clothingItems={selectedOutfitImages} />
+                                    </Swipeable>
+                                </View>
+                            )
+                        ) : (
+                            <>
+                                <Text style={styles.modalText}>You haven't logged an outfit for this day.</Text>
+                                <TouchableOpacity style={globalStyles.button} onPress={handleLogOutfit}>
+                                    <Text style={globalStyles.buttonText}>Log outfit</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </Animated.View>
+                </View>
+            )}
 
-                        </View>
+            {selectOutfitModalVisible && (
+                <View style={StyleSheet.absoluteFill}>
+                    <TouchableWithoutFeedback onPress={closeSelectOutfitModal}>
+                        <Animated.View style={[styles.modalOverlay, { opacity: fadeAnimSelect }]} />
+                    </TouchableWithoutFeedback>
+
+                    <Animated.View style={[styles.modalContentTall, { transform: [{ translateY: slideAnimSelect }] }]}>
+                        <View style={globalStyles.dragBar} />
+                        <SelectOutfitScreen
+                            date={selectedDate}
+                            onClose={closeSelectOutfitModal}
+                            onOutfitLogged={(date, data) => {
+                                setOutfitsByDate(prev => ({ ...prev, [date]: data }));
+                                if (date === selectedDate) fetchOutfitImages(data.outfitId);
+                                closeSelectOutfitModal();
+                            }}
+                        />
                     </Animated.View>
                 </View>
             )}
@@ -278,12 +319,22 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
     },
+    modalContentTall: {
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        height: '80%',
+        backgroundColor: '#1E1E1E',
+        padding: 24,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
     modalTitle: {
         color: '#FFFFFF',
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 12,
-        alignSelf:"center"
+        alignSelf: "center"
     },
     modalText: {
         color: '#FFFFFF',

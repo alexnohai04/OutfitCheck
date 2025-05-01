@@ -1,0 +1,16 @@
+export const SYMBOL_ICONS = {
+  "Machine wash 30C": require("../assets/careIcons/machine_wash_30.png"),
+  "Machine wash 40C": require("../assets/careIcons/machine_wash_40.png"),
+  "Machine wash 50C": require("../assets/careIcons/machine_wash_50.png"),
+  "Machine wash 60C": require("../assets/careIcons/machine_wash_60.png"),
+  "Hand wash": require("../assets/careIcons/hand_wash.png"),
+  "Do not wash": require("../assets/careIcons/do_not_wash.png"),
+  "Tumble dry allowed": require("../assets/careIcons/thumble_dry_allowed.png"),
+  "Do not tumble dry": require("../assets/careIcons/do_not_tumble_dry.png"),
+  "Iron at low temperature": require("../assets/careIcons/iron_low.png"),
+  "Iron at medium temperature": require("../assets/careIcons/iron_medium.png"),
+  "Iron at high temperature": require("../assets/careIcons/iron_high.png"),
+  "Do not iron": require("../assets/careIcons/do_not_iron.png"),
+  "Bleach allowed": require("../assets/careIcons/bleach_allowed.png"),
+  "Do not bleach": require("../assets/careIcons/do_not_bleach.png"),
+};

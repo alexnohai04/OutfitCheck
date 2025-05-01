@@ -56,6 +56,12 @@ public class OutfitController {
         return ResponseEntity.ok(outfits);
     }
 
+    @GetMapping("/user_public/{userId}")
+    public ResponseEntity<List<Outfit>> getPublicOutfitsByUser(@PathVariable Long userId) {
+        List<Outfit> outfits = outfitRepository.findByCreatorIdAndPublicVisibleTrue(userId);
+        return ResponseEntity.ok(outfits);
+    }
+
     // 🔹 3. Obținerea unui outfit după ID
     @GetMapping("/{id}")
     public ResponseEntity<Outfit> getOutfitById(@PathVariable Long id) {

@@ -5,7 +5,7 @@ const globalStyles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#2C2C2C",
+        backgroundColor: "#1E1E1E",
     },
     title: {
         fontSize: 24,
@@ -157,6 +157,14 @@ const globalStyles = StyleSheet.create({
         left: 0,
         zIndex: 10,
         padding: 20,
+    },
+    dragBar: {
+        alignSelf: "center",
+        width: 40,
+        height: 5,
+        backgroundColor: "#666",
+        borderRadius: 3,
+        marginBottom: 16,
     },
 
 });

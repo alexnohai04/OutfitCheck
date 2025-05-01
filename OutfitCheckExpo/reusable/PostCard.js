@@ -11,6 +11,7 @@ import {
     Alert,
     Animated,
     TouchableWithoutFeedback,
+    Modal,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import OutfitPreview from "../reusable/OutfitPreview";
@@ -25,8 +26,7 @@ dayjs.extend(relativeTime);
 
 const { width } = Dimensions.get("window");
 const CARD_SIZE = width - 20;
-
-const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete }) => {
+const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete, onOptionsPress }) => {
     const navigation = useNavigation();
     const { userId } = useContext(UserContext);
 
@@ -77,7 +77,6 @@ const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete }) => {
         }
     };
 
-
     const onScroll = (e) => {
         const index = Math.round(e.nativeEvent.contentOffset.x / CARD_SIZE);
         setActiveIndex(index);
@@ -101,6 +100,11 @@ const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete }) => {
                     <Text style={styles.date}>{dayjs(post.postedAt).fromNow()}</Text>
                 </View>
 
+                {userId === post.userId && (
+                    <TouchableOpacity onPress={onOptionsPress}>
+                        <Icon name="ellipsis-vertical" size={20} color="#fff" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             <ScrollView
@@ -136,7 +140,7 @@ const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete }) => {
 
                 <View style={styles.carouselItem}>
                     {clothingItems ? (
-                        <OutfitPreview clothingItems={clothingItems} size="medium" enableTooltip/>
+                        <OutfitPreview clothingItems={clothingItems} size="medium" enableTooltip />
                     ) : (
                         <ActivityIndicator size="small" color="#FF6B6B" />
                     )}
@@ -179,6 +183,7 @@ const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete }) => {
         </View>
     );
 };
+
 
 const styles = StyleSheet.create({
     card: {
@@ -269,6 +274,28 @@ const styles = StyleSheet.create({
     },
     iconCircleInactive: {
         backgroundColor: "#3a3a3a",
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalContainer: {
+        backgroundColor: "#2c2c2c",
+        padding: 20,
+        borderRadius: 10,
+        minWidth: 200,
+    },
+    modalOption: {
+        color: "#fff",
+        fontSize: 16,
+        paddingVertical: 10,
+        textAlign: "center",
+    },
+    deleteText: {
+        color: "#FF6B6B",
+        fontWeight: "bold",
     },
 });
 

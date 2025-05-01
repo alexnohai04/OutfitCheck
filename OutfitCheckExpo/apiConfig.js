@@ -29,6 +29,7 @@ const API_URLS = {
 
     CREATE_OUTFIT: `${API_BASE}/api/outfits/create`,
     GET_OUTFITS_BY_USER: `${API_BASE}/api/outfits/user`,
+    GET_PUBLIC_OUTFITS_BY_USER: `${API_BASE}/api/outfits/user_public`,
     GET_OUTFIT_DETAILS: `${API_BASE}/api/outfits`,
     DELETE_OUTFIT: (outfitId) => `${API_BASE}/api/outfits/${outfitId}`,
 
@@ -48,7 +49,8 @@ const API_URLS = {
     GET_POSTS_BY_USER: (userId, currentUserId) =>
         `${API_BASE}/api/posts?userId=${userId}&currentUserId=${currentUserId}`,
 
-    UPLOAD_CLOTHING_IMAGE: `${API_BASE}/api/clothing/upload-temp-image`
+    UPLOAD_CLOTHING_IMAGE: `${API_BASE}/api/clothing/upload-temp-image`,
+    ANALYZE_LABEL:`${API_BASE}/api/openai/analyze-label`
 
 };
 

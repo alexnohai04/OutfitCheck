@@ -23,6 +23,8 @@ import AddPostScreen from "./screens/AddPostScreen";
 import UserProfileScreen from "./screens/UserProfileScreen";
 import PostDetailsScreen from "./screens/PostDetailsScreen";
 import LoadingScreen from "./reusable/LoadingScreen";
+import WardrobeScreen from "./screens/WardrobeScreen";
+import AddCareInstructionsScreen from "./screens/AddCareInstructionsScreen";
 
 const Stack = createStackNavigator();
 
@@ -56,9 +58,9 @@ const AppNavigator = () => {
                 <Stack.Screen name="UserProfile" component={UserProfileScreen} />
                 <Stack.Screen name="PostDetailsScreen" component={PostDetailsScreen} />
                 <Stack.Screen name="LoadingScreen" component={LoadingScreen} options={{ headerShown: false }} />
-
-
-            </Stack.Navigator>
+                <Stack.Screen name="WardrobeScreen" component={WardrobeScreen} />
+                <Stack.Screen name="AddCareInstructionsScreen" component={AddCareInstructionsScreen} />
+                </Stack.Navigator>
             <Toast config={toastConfig} position="top" />
         </NavigationContainer>
     );
