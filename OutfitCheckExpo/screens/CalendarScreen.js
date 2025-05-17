@@ -12,7 +12,7 @@ import {
     TouchableOpacity
 } from 'react-native';
 import { CalendarList } from 'react-native-calendars';
-import { useNavigation } from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import { Swipeable } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
 import API_URLS from "../apiConfig";
@@ -107,28 +107,31 @@ const CalendarScreen = () => {
         });
     };
 
-    useEffect(() => {
-        if (!userId) return;
-        const fetchOutfits = async () => {
-            try {
-                const res = await apiClient.get(`${API_URLS.GET_LOGGED_OUTFITS_BY_USER}/${userId}`);
-                const byDate = {};
-                res.data.forEach(entry => {
-                    byDate[entry.date] = {
-                        outfitId: entry.outfit.id,
-                        top: entry.outfit.top,
-                        bottom: entry.outfit.bottom,
-                        shoes: entry.outfit.shoes
-                    };
-                });
-                setOutfitsByDate(byDate);
-            } catch (err) {
-                console.error('Error fetching logged outfits:', err);
-            }
-        };
+    useFocusEffect(
+        React.useCallback(() => {
+            if (!userId) return;
 
-        fetchOutfits();
-    }, [userId]);
+            const fetchOutfits = async () => {
+                try {
+                    const res = await apiClient.get(`${API_URLS.GET_LOGGED_OUTFITS_BY_USER}/${userId}`);
+                    const byDate = {};
+                    res.data.forEach(entry => {
+                        byDate[entry.date] = {
+                            outfitId: entry.outfit.id,
+                            top: entry.outfit.top,
+                            bottom: entry.outfit.bottom,
+                            shoes: entry.outfit.shoes
+                        };
+                    });
+                    setOutfitsByDate(byDate);
+                } catch (err) {
+                    console.error('Error fetching logged outfits:', err);
+                }
+            };
+
+            fetchOutfits();
+        }, [userId])
+    );
 
     const fetchOutfitImages = async (outfitId) => {
         try {
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#2C2C2C',
-        marginBottom: 70,
+        //marginBottom: 70,
     },
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,

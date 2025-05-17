@@ -17,10 +17,10 @@ SET username = CONCAT('user_', id)
 WHERE username IS NULL;
 delete from posts;
 
-delete is_public from outfits;
+delete public_visible from outfits;
 
 UPDATE outfits
-SET is_public = false;
+SET visible = false;
 
 
 
@@ -33,3 +33,5 @@ ALTER TABLE outfits
 
 
 select * from outfits;
+
+ALTER TABLE outfits DROP COLUMN public_visible;

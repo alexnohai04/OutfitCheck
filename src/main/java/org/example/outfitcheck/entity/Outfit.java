@@ -30,6 +30,6 @@ public class Outfit {
     private List<ClothingItem> clothingItems;  // Lista hainelor din acest outfit
 
     @Column(nullable = true)
-    private boolean publicVisible = false;
+    private boolean visible  = false;
 
 }

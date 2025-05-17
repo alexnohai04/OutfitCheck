@@ -1,5 +1,6 @@
 package org.example.outfitcheck.controller;
 
+import org.example.outfitcheck.config.JwtUtil;
 import org.example.outfitcheck.dto.OutfitDTO;
 import org.example.outfitcheck.entity.ClothingItem;
 import org.example.outfitcheck.entity.Outfit;
@@ -7,6 +8,7 @@ import org.example.outfitcheck.entity.User;
 import org.example.outfitcheck.repository.ClothingItemRepository;
 import org.example.outfitcheck.repository.OutfitRepository;
 import org.example.outfitcheck.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,10 +22,14 @@ public class OutfitController {
     private final UserRepository userRepository;
     private final ClothingItemRepository clothingItemRepository;
 
-    public OutfitController(OutfitRepository outfitRepository, UserRepository userRepository, ClothingItemRepository clothingItemRepository) {
+    private final JwtUtil jwtUtil;
+
+
+    public OutfitController(OutfitRepository outfitRepository, UserRepository userRepository, ClothingItemRepository clothingItemRepository, JwtUtil jwtUtil) {
         this.outfitRepository = outfitRepository;
         this.userRepository = userRepository;
         this.clothingItemRepository = clothingItemRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     // 🔹 1. Creare outfit nou
@@ -58,7 +64,7 @@ public class OutfitController {
 
     @GetMapping("/user_public/{userId}")
     public ResponseEntity<List<Outfit>> getPublicOutfitsByUser(@PathVariable Long userId) {
-        List<Outfit> outfits = outfitRepository.findByCreatorIdAndPublicVisibleTrue(userId);
+        List<Outfit> outfits = outfitRepository.findByCreatorIdAndVisibleTrue(userId);
         return ResponseEntity.ok(outfits);
     }
 
@@ -78,4 +84,33 @@ public class OutfitController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PutMapping("/{id}/toggle-visibility")
+    public ResponseEntity<?> toggleVisibility(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String token
+    ) {
+        try {
+            Long userId = jwtUtil.extractUserId(token.replace("Bearer ", ""));
+            Optional<Outfit> outfitOptional = outfitRepository.findById(id);
+
+            if (outfitOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Outfit outfit = outfitOptional.get();
+
+            if (!outfit.getCreator().getId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not authorized to modify this outfit.");
+            }
+
+            outfit.setVisible(!outfit.isVisible());
+            Outfit updatedOutfit = outfitRepository.save(outfit);
+
+            return ResponseEntity.ok(updatedOutfit);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid token.");
+        }
+    }
+
 }

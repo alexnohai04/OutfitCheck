@@ -10,6 +10,7 @@ import CameraScreenModal from "../reusable/CameraModal"; // renamed to emphasize
 import globalStyles from "../styles/globalStyles";
 import AddCareInstructionsScreen from "./AddCareInstructionsScreen";
 import AddClothingItemScreen from "./AddClothingItemScreen";
+import TodaysFitScreen from "./TodaysFitScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -23,7 +24,7 @@ const AppTabs = () => {
                     tabBarIcon: ({ color, size }) => {
                         if (route.name === "Wardrobe") return <MaterialCommunityIcons name="wardrobe" size={size} color={color} />;
                         if (route.name === "Feed") return <MaterialCommunityIcons name="home" size={size + 4} color={color} />;
-                        if (route.name === "Calendar") return <Ionicons name="calendar" size={size} color={color} />;
+                        if (route.name === "TodaysFit") return <Ionicons name="sparkles" size={size} color={color} />;
                         if (route.name === "Profile") return <Ionicons name="person" size={size} color={color} />;
                         if (route.name === "Camera") return <Ionicons name="camera" size={size} color={color} />;
                     },
@@ -33,9 +34,8 @@ const AppTabs = () => {
                     headerShown: false,
                 })}
             >
-                <Tab.Screen name="Calendar" component={CalendarScreen} />
                 <Tab.Screen name="Feed" component={PostFeedScreen} />
-
+                <Tab.Screen name="TodaysFit" component={TodaysFitScreen} />
                 <Tab.Screen
                     name="Camera"
                     options={{
@@ -61,7 +61,7 @@ const AppTabs = () => {
                 </Tab.Screen>
 
                 <Tab.Screen name="Wardrobe" component={WardrobeScreen} />
-                <Tab.Screen name="Test" component={AddCareInstructionsScreen} />
+                {/*<Tab.Screen name="Test" component={AddCareInstructionsScreen} />*/}
                 <Tab.Screen name="Profile" component={ProfileScreen} />
             </Tab.Navigator>
 

@@ -8,6 +8,6 @@ import java.util.List;
 @Repository
 public interface OutfitRepository extends JpaRepository<Outfit, Long> {
     List<Outfit> findByCreatorId(Long userId);
-    List<Outfit> findByCreatorIdAndPublicVisibleTrue(Long userId);
+    List<Outfit> findByCreatorIdAndVisibleTrue(Long userId);
 
 }

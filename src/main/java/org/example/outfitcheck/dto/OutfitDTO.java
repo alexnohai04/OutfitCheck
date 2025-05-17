@@ -8,5 +8,6 @@ import java.util.List;
 public class OutfitDTO {
     private String name;
     private Long creatorId;
+    private boolean visible;
     private List<Long> items;  // Listă cu ID-urile hainelor selectate
 }

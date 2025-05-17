@@ -50,8 +50,9 @@ const API_URLS = {
         `${API_BASE}/api/posts?userId=${userId}&currentUserId=${currentUserId}`,
 
     UPLOAD_CLOTHING_IMAGE: `${API_BASE}/api/clothing/upload-temp-image`,
-    ANALYZE_LABEL:`${API_BASE}/api/openai/analyze-label`
+    ANALYZE_LABEL:`${API_BASE}/api/openai/analyze-label`,
 
+    UPDATE_OUTFIT: (outfitId) =>`${API_BASE}/api/outfits/${outfitId}/toggle-visibility`
 };
 
 export default API_URLS;

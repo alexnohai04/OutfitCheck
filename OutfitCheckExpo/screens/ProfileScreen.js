@@ -45,7 +45,7 @@ const ProfileScreen = () => {
             setPosts(postsRes.data.sort((a, b) => b.id - a.id));
 
 
-            const outfitsRes = await apiClient.get(`${API_URLS.GET_OUTFITS_BY_USER}/${userId}`);
+            const outfitsRes = await apiClient.get(`${API_URLS.GET_PUBLIC_OUTFITS_BY_USER}/${userId}`);
             const processedOutfits = await Promise.all(
                 outfitsRes.data.map(async (outfit) => {
                     const processedItems = await processClothingItems(outfit.clothingItems);
@@ -171,29 +171,11 @@ const ProfileScreen = () => {
     );
 
     const renderOutfits = () => {
-        const dataWithAddButton = [{ isAddButton: true }, ...outfits];
-
         return (
             <FlatList
-                data={dataWithAddButton}
+                data={outfits}
                 keyExtractor={(item, index) => item.id?.toString() || `add-${index}`}
                 renderItem={({ item }) => {
-                    if (item.isAddButton) {
-                        return (
-                            <TouchableOpacity
-                                style={styles.gridItem}
-                                onPress={() => navigation.navigate("OutfitBuilder")}
-                            >
-                                <View style={styles.outfitPreviewWrapper}>
-                                    <View style={styles.outfitPreviewContainer}>
-                                        <Ionicons name="add" size={40} color="#FFF" />
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    }
-
-
                     return (
                         <TouchableOpacity
                             style={styles.gridItem}
@@ -213,6 +195,12 @@ const ProfileScreen = () => {
 
     return (
         <View style={styles.container}>
+            <View style={styles.calendarWrapper}>
+                <TouchableOpacity onPress={() => navigation.navigate("CalendarScreen")}>
+                    <Ionicons name="calendar-outline" size={24} color="#AAA" />
+                </TouchableOpacity>
+            </View>
+
             <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
                 {profileImage ? (
                     <Image source={{ uri: profileImage }} style={styles.profileImage} />
@@ -262,7 +250,6 @@ const ProfileScreen = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -270,7 +257,12 @@ const styles = StyleSheet.create({
         backgroundColor: "#1E1E1E",
         paddingTop: 40,
         paddingHorizontal: 20,
-        justifyContent:"center"
+    },
+    calendarWrapper: {
+        position: "absolute",
+        top: 50,
+        right: 20,
+        zIndex: 10,
     },
     profileImageContainer: {
         width: 120,
@@ -371,19 +363,6 @@ const styles = StyleSheet.create({
     flatListRow: {
         justifyContent: "flex-start",
     },
-    addButton: {
-        borderWidth: 2,
-        borderColor: "#3A3A3A",
-        borderRadius: 16,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingVertical: 12,
-       // height: 110,
-       // width: 110,
-       // margin: 4,
-        //backgroundColor: "#2E2E2E",
-        //padding: 30
-    },
     outfitPreviewWrapper: {
         width: '100%',
         borderWidth: 2,
@@ -394,14 +373,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         elevation: 4,
-        minHeight: 290, // aproximativ înălțimea medie a unui OutfitPreview
+        minHeight: 290,
     },
     outfitPreviewContainer: {
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
     },
-
 });
 
 export default ProfileScreen;

@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {View, Text, ActivityIndicator, Alert, StyleSheet, TouchableOpacity} from "react-native";
-import {useNavigation, useRoute} from "@react-navigation/native";
+import {
+    View,
+    Text,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    TouchableOpacity
+} from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import globalStyles from "../styles/globalStyles";
 import apiClient from "../apiClient";
@@ -59,8 +66,7 @@ const OutfitDetailsScreen = () => {
         );
     };
 
-
-    const deleteOutfit = async (date) => {
+    const deleteOutfit = async () => {
         try {
             await apiClient.delete(API_URLS.DELETE_OUTFIT(outfitId));
             navigation.goBack();
@@ -80,6 +86,34 @@ const OutfitDetailsScreen = () => {
             });
         }
     };
+
+    const toggleVisibility = async () => {
+        try {
+            const updatedOutfit = { ...outfit, visible: !outfit.visible };
+            const response = await apiClient.put(API_URLS.UPDATE_OUTFIT(outfitId), updatedOutfit);
+
+            if (response.status === 200) {
+                setOutfit(updatedOutfit);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Visibility updated',
+                    text2: `Outfit is now ${updatedOutfit.visible ? 'Public' : 'Private'}.`,
+                    position: 'top',
+                });
+            } else {
+                throw new Error("Failed to update visibility");
+            }
+        } catch (err) {
+            console.error("Error updating visibility:", err);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Could not update outfit visibility.',
+                position: 'top',
+            });
+        }
+    };
+
     if (loading) {
         return (
             <SafeAreaView style={globalStyles.container}>
@@ -105,15 +139,37 @@ const OutfitDetailsScreen = () => {
                 <Icon name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
 
-            <Text style={globalStyles.title}>{outfit.name}</Text>
+            <View style={styles.titleRow}>
+                <Text style={styles.title}>{outfit.name}</Text>
+                <Icon
+                    name={outfit.visible ? "lock-open-outline" : "lock-closed-outline"}
+                    size={20}
+                    color={'#666'}
+                    style={{ marginLeft: 8 }}
+                />
+            </View>
 
             <View style={styles.previewContainer}>
-                    <OutfitPreview clothingItems={outfit.clothingItems} size="large" enableTooltip/>
+                <OutfitPreview clothingItems={outfit.clothingItems} size="large" enableTooltip />
             </View>
-                <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
-                    <Text style={globalStyles.deleteText}>Delete</Text>
+
+            <View style={styles.buttonRow}>
+                <TouchableOpacity style={[styles.actionButton, styles.publicButton]} onPress={toggleVisibility}>
+                    <Text style={globalStyles.buttonText}>
+                        {outfit.visible ? 'Make Private' : 'Make Public'}
+                    </Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={confirmDelete}>
+                    <Icon
+                        name="trash-outline"
+                        size={18}
+                        color="#fff"
+                        style={{ marginRight: 6 }}
+                    />
+                    <Text style={globalStyles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+            </View>
         </SafeAreaView>
     );
 };
@@ -123,19 +179,40 @@ const styles = StyleSheet.create({
         marginTop: 20,
         alignItems: 'center',
         width: '80%',
-        height: '80%'
+        height: '80%',
+    },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 10,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 12,
+        marginTop: 20,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 10,
+        minWidth: 130,
+    },
+    publicButton: {
+        backgroundColor: '#666',
     },
     deleteButton: {
         backgroundColor: '#FF3B30',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: 90,
-        height: 20,
-        borderRadius: 10,
-        //flex: 1,
-        margin: 20
     },
-
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#FFFFFF",
+    },
 });
 
 export default OutfitDetailsScreen;

@@ -304,12 +304,12 @@ const styles = StyleSheet.create({
     },
     row: {
         flex: 1,
-        justifyContent: "space-between",
+        //justifyContent: "space-between",
     },
     gridItem: {
         width: "30%",
         margin: 5,
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
     },
     outfitPreviewWrapper: {
