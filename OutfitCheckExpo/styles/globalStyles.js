@@ -161,10 +161,10 @@ const globalStyles = StyleSheet.create({
     dragBar: {
         alignSelf: "center",
         width: 40,
-        height: 5,
+        height: 4,
         backgroundColor: "#666",
         borderRadius: 3,
-        marginBottom: 16,
+        marginBottom: 10,
     },
 
 });
