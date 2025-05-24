@@ -2,13 +2,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { View, Image, StyleSheet, Pressable, Text, TouchableWithoutFeedback, Animated, Linking } from "react-native";
 import {Link} from "expo-router";
 
-const CATEGORY_ORDER = ["Headwear", "Topwear", "Bottomwear", "Footwear", "FullBodywear"];
+const CATEGORY_ORDER = ["Headwear", "Topwear+Outerwear", "Bottomwear", "FullBodywear", "Footwear"];
+
 const CATEGORY_IDS = {
     Headwear: 4,
     Topwear: 1,
     Bottomwear: 2,
     Footwear: 3,
     FullBodywear: 5,
+    Outerwear: 6
 };
 
 const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style, enableTooltip = false }) => {
@@ -20,7 +22,8 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
 
     const imageSize = size === "large" ? 170 : compact ? 60 : 100;
     const smallSize = size === "large" ? 80 : compact ? 45 : 60;
-    const overlap = size === "large" ? 100 : compact ? 35 : 60;
+    const largeSize = size === "large" ? 210 : compact ? 100 : 140;
+    const overlap = size === "large" ? 80 : compact ? 25 : 60;
 
     const getCategoryName = (id) => {
         return Object.keys(CATEGORY_IDS).find(key => CATEGORY_IDS[key] === id) || "Unknown";
@@ -37,8 +40,9 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
 
     const generateGoogleSearchLink = (item) => {
         const name = getCategoryName(item.category?.id);
-        const color = item.colors[0];
-        const terms = [item.brand, item.material, name, color]
+        const color = item.baseColor;
+        const article = item.articleType
+        const terms = [item.brand, name, color, article]
             .filter(Boolean)
             .join(" ");
         const query = encodeURIComponent(terms);
@@ -107,12 +111,27 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
                         )}
                         <View style={styles.container}>
                             {CATEGORY_ORDER.map((category) => {
-                                const items = clothingItems.filter(
-                                    (item) => item.category?.id === CATEGORY_IDS[category]
-                                );
+                                let items = [];
+                                if (category === "Topwear+Outerwear") {
+                                    items = clothingItems.filter(
+                                        (item) =>
+                                            item.category?.id === CATEGORY_IDS.Topwear ||
+                                            item.category?.id === CATEGORY_IDS.Outerwear
+                                    );
+                                } else {
+                                    items = clothingItems.filter(
+                                        (item) => item.category?.id === CATEGORY_IDS[category]
+                                    );
+                                }
+                                items.sort((a, b) => {
+                                    if (a.category?.id === CATEGORY_IDS.Outerwear) return -1;
+                                    if (b.category?.id === CATEGORY_IDS.Outerwear) return 1;
+                                    return 0;
+                                });
+
                                 if (!items.length) return null;
 
-                                const isTopGroup = category === "Topwear";
+                                const isTopGroup = category === "Topwear+Outerwear";
 
                                 return (
                                     <View
@@ -166,9 +185,9 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
                                                                     opacity: tooltipAnim,
                                                                     transform: [{ translateY: tooltipAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }]
                                                                 }]}>
+                                                                    <Text style={styles.tooltipText}>{topItem.articleType} {topItem.baseColor}</Text>
                                                                     <Text style={styles.tooltipText}>{getCategoryName(topItem.category?.id)}</Text>
                                                                     <Text style={styles.tooltipText}>{topItem.brand || "Unknown Brand"}</Text>
-                                                                    {topItem.material && (<Text style={styles.tooltipText}>{topItem.material}</Text> )}
                                                                     <Text
                                                                         style={[styles.tooltipText, { textDecorationLine: "underline", color: "#FF6B6B" }]}
                                                                         onPress={() => Linking.openURL(topItem.link || generateGoogleSearchLink(topItem))}
@@ -185,7 +204,8 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
                                         ) : (
                                             items.map((item) => {
                                                 const isSmall = category === "Headwear" || category === "Footwear";
-                                                const itemSize = isSmall ? smallSize : imageSize;
+                                                const isLarge = category === "FullBodyWear";
+                                                const itemSize = isLarge ? largeSize : isSmall ? smallSize : imageSize;
                                                 const isSelected = selectedItemId === item.id;
                                                 const animatedStyle = isSelected ? { transform: [{ scale: scaleAnim }] } : {};
                                                 const itemOpacity = selectedItemId && !isSelected ? opacityAnim : 1;
@@ -215,9 +235,8 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
                                                                 opacity: tooltipAnim,
                                                                 transform: [{ translateY: tooltipAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }]
                                                             }]}>
-                                                                <Text style={styles.tooltipText}>{getCategoryName(item.category?.id)}</Text>
+                                                                <Text style={styles.tooltipText}>{item.baseColor} {item.articleType || getCategoryName(item.category?.id)}</Text>
                                                                 <Text style={styles.tooltipText}>{item.brand || "Unknown Brand"}</Text>
-                                                                {item.material && (<Text style={styles.tooltipText}>{item.material}</Text> )}
                                                                 <Text
                                                                     style={[styles.tooltipText, { textDecorationLine: "underline", color: "#FF6B6B" }]}
                                                                     onPress={() => Linking.openURL(item.link || generateGoogleSearchLink(item))}
@@ -242,12 +261,27 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
                 <View style={[styles.wrapper, style]}>
                     <View style={styles.container}>
                         {CATEGORY_ORDER.map((category) => {
-                            const items = clothingItems.filter(
-                                (item) => item.category?.id === CATEGORY_IDS[category]
-                            );
+                            let items = [];
+                            if (category === "Topwear+Outerwear") {
+                                items = clothingItems.filter(
+                                    (item) =>
+                                        item.category?.id === CATEGORY_IDS.Topwear ||
+                                        item.category?.id === CATEGORY_IDS.Outerwear
+                                );
+                                items.sort((a, b) => {
+                                    if (a.category?.id === CATEGORY_IDS.Outerwear) return -1;
+                                    if (b.category?.id === CATEGORY_IDS.Outerwear) return 1;
+                                    return 0;
+                                });
+                            } else {
+                                items = clothingItems.filter(
+                                    (item) => item.category?.id === CATEGORY_IDS[category]
+                                );
+                            }
+
                             if (!items.length) return null;
 
-                            const isTopGroup = category === "Topwear";
+                            const isTopGroup = category === "Topwear+Outerwear";
 
                             return (
                                 <View
@@ -286,8 +320,8 @@ const OutfitPreview = ({ clothingItems, compact = false, size = "medium", style,
                                     ) : (
                                         items.map((item) => {
                                             const isSmall = category === "Headwear" || category === "Footwear";
-                                            const itemSize = isSmall ? smallSize : imageSize;
-
+                                            const isLarge = category === "FullBodywear";
+                                            const itemSize = isLarge ? largeSize : isSmall ? smallSize : imageSize;
                                             return (
                                                 <Image
                                                     key={item.id}

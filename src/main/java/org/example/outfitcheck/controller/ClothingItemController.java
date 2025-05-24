@@ -28,12 +28,14 @@ public class ClothingItemController {
             ClothingItem savedItem = clothingItemService.addClothingItemWithImageUrl(
                     request.getUserId(),
                     request.getCategoryId(),
-                    request.getColors(),
-                    request.getMaterial(),
+                    request.getBaseColor(),
                     request.getBrand(),
                     request.getImageUrl(),
                     request.getLink(),
-                    request.getCareSymbols()
+                    request.getCareSymbols(),
+                    request.getArticleType(),
+                    request.getSeason(),
+                    request.getUsage()
             );
             return ResponseEntity.ok(savedItem);
         } catch (IllegalArgumentException e) {
@@ -49,7 +51,7 @@ public class ClothingItemController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(
-                    new VisionAnalysisResponse("error.webp", e.getMessage(), new ArrayList<>(), null)
+                    new VisionAnalysisResponse("error.webp", e.getMessage(), new ArrayList<>(), null, null, null, null, null, null)
             );
         }
     }
@@ -64,6 +66,15 @@ public class ClothingItemController {
     public ResponseEntity<ClothingItem> getClothingItemById(@PathVariable Long id) {
         Optional<ClothingItem> item = clothingItemService.getClothingItemById(id);
         return item.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/by-ids")
+    public ResponseEntity<List<ClothingItem>> getClothingItemsByIds(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        List<ClothingItem> items = clothingItemService.getClothingItemsByIds(ids);
+        return ResponseEntity.ok(items);
     }
 
     @DeleteMapping("/{id}")

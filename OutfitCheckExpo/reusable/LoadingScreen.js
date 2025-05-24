@@ -45,13 +45,28 @@ const LoadingScreen = () => {
                     headers: { "Content-Type": "multipart/form-data" },
                 });
 
-                const { fileName, suggestedCategory, topColors, brand } = response.data;
+                const {
+                    fileName,
+                    suggestedCategory,
+                    topColors,
+                    brand,
+                    subCategory,
+                    articleType,
+                    baseColour,
+                    season,
+                    usage
+                } = response.data;
 
                 navigation.replace("AddClothingItem", {
                     imageUrl: "/uploads/clothing/" + fileName,
                     suggestedCategory,
                     topColors,
-                    brand
+                    brand,
+                    subCategory,
+                    articleType,
+                    baseColour,
+                    season,
+                    usage
                 });
 
             } catch (error) {

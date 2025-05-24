@@ -104,7 +104,6 @@ const ClothingItemsScreen = () => {
                 )}
                 <View style={styles.infoContainer}>
                     <Text style={styles.itemText}>Colors: {item.colors.join(', ')}</Text>
-                    <Text style={styles.itemText}>Material: {item.material}</Text>
                     <Text style={styles.itemText}>Category: {item.category.name}</Text>
                     <Text style={styles.itemText}>Brand: {item.brand}</Text>
                     {item.link ? (

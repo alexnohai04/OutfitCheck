@@ -34,4 +34,26 @@ ALTER TABLE outfits
 
 select * from outfits;
 
-ALTER TABLE outfits DROP COLUMN public_visible;
+ALTER TABLE clothing_items DROP COLUMN material;
+
+DROP TABLE IF EXISTS clothing_item_colors;
+
+UPDATE clothing_items
+SET usage = 'Casual'
+WHERE usage IS NULL
+   OR TRIM(usage) = ''
+   OR LOWER(usage) = 'null';
+
+SELECT id, image_url
+FROM clothing_items
+WHERE image_url LIKE 'http%';
+
+DELETE FROM clothing_items
+WHERE image_url LIKE 'http%';
+
+DELETE FROM outfit_clothing
+WHERE clothing_item_id IN (
+    SELECT id
+    FROM clothing_items
+    WHERE image_url LIKE 'file://%'
+);

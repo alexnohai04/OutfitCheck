@@ -94,4 +94,8 @@ public class VisionService {
 
         return result;
     }
+    public Map<String, Object> analyzeWithGoogleVision(File file) throws Exception {
+        return detectLabelsAndColorsFromFilename(file.getName());
+    }
+
 }

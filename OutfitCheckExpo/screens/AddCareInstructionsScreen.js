@@ -175,7 +175,7 @@ const AddCareInstructionsScreen = () => {
                 careSymbols: selectedSymbols,
             });
             if (response.status === 200 || response.status === 201) {
-                navigation.navigate("Home", { screen: "Wardrobe" });
+                navigation.replace("Home", { screen: "Wardrobe" });
             } else {
                 Alert.alert("Error", "Failed to save clothing item.");
             }

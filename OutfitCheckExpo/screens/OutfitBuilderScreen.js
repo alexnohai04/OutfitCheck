@@ -48,13 +48,14 @@ const OutfitBuilderScreen = () => {
     const panelPosition = useSharedValue(height * 0.5);
     const isDragging = useRef(false);
 
-    const CATEGORY_ORDER = ["Headwear", "Topwear", "Bottomwear", "Footwear", "FullBodywear"];
+    const CATEGORY_ORDER = ["Headwear", "Topwear","Outerwear", "Bottomwear", "Footwear", "FullBodywear"];
     const CATEGORY_IDS = {
         Headwear: 4,
         Topwear: 1,
         Bottomwear: 2,
         Footwear: 3,
         FullBodywear: 5,
+        Outerwear: 6
     };
 
 
@@ -97,19 +98,68 @@ const OutfitBuilderScreen = () => {
 
     const toggleItemSelection = (item) => {
         setSelectedItems((prevItems) => {
-            if (prevItems.some((i) => i.id === item.id)) {
+            const alreadySelected = prevItems.some((i) => i.id === item.id);
+            const isFullBody = item.category.id === CATEGORY_IDS.FullBodywear;
+            const isTop = item.category.id === CATEGORY_IDS.Topwear;
+            const isBottom = item.category.id === CATEGORY_IDS.Bottomwear;
+            const isOuterwear = item.category.id === CATEGORY_IDS.Outerwear;
+
+            if (alreadySelected) {
                 return prevItems.filter((i) => i.id !== item.id);
             }
 
-            if (item.category.id === CATEGORY_IDS.Topwear) {
-                const tops = prevItems.filter((i) => i.category.id === CATEGORY_IDS.Topwear);
-                if (tops.length < 2) return [...prevItems, item];
-                return [...tops.slice(1), item, ...prevItems.filter((i) => i.category.id !== CATEGORY_IDS.Topwear)];
+            let updatedItems = [...prevItems];
+
+            // 🟧 FullBodywear elimină Topwear + Bottomwear
+            if (isFullBody) {
+                updatedItems = updatedItems.filter(
+                    (i) =>
+                        i.category.id !== CATEGORY_IDS.Topwear &&
+                        i.category.id !== CATEGORY_IDS.Bottomwear&&
+                        i.category.id !== CATEGORY_IDS.Outerwear
+                );
             }
 
-            return [...prevItems.filter((i) => i.category.id !== item.category.id), item];
+            // 🟧 Topwear or Bottomwear elimină FullBodywear
+            if (isTop || isBottom) {
+                updatedItems = updatedItems.filter(
+                    (i) => i.category.id !== CATEGORY_IDS.FullBodywear
+                );
+            }
+
+            // 🟧 Outerwear — maxim 1
+            if (isOuterwear) {
+                updatedItems = updatedItems.filter(
+                    (i) => i.category.id !== CATEGORY_IDS.Outerwear
+                );
+            }
+
+            // 🟧 Topwear — max 2
+            if (isTop) {
+                const tops = updatedItems.filter((i) => i.category.id === CATEGORY_IDS.Topwear);
+                if (tops.length >= 2) {
+                    // elimină cel mai vechi top și adaugă noul
+                    updatedItems = updatedItems.filter((i) => i.category.id !== CATEGORY_IDS.Topwear);
+                    updatedItems.push(tops[1], item); // păstrezi al doilea + noul
+                    return updatedItems;
+                }
+            }
+
+            // 🟧 Toate celelalte categorii — max 1 (ex: Headwear, Bottomwear, Footwear)
+            const singleInstanceCategories = [
+                CATEGORY_IDS.Headwear,
+                CATEGORY_IDS.Bottomwear,
+                CATEGORY_IDS.Footwear,
+            ];
+
+            if (singleInstanceCategories.includes(item.category.id)) {
+                updatedItems = updatedItems.filter((i) => i.category.id !== item.category.id);
+            }
+
+            return [...updatedItems, item];
         });
     };
+
 
     const triggerShake = () => {
         Animated.sequence([

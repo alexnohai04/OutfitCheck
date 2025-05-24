@@ -18,13 +18,8 @@ public class ClothingItem {
     @SequenceGenerator(name = "clothing_seq", sequenceName = "clothing_sequence", allocationSize = 1)
     private Long id;
 
-    @ElementCollection
-    @CollectionTable(name = "clothing_item_colors", joinColumns = @JoinColumn(name = "clothing_item_id"))
-    @Column(name = "color")
-    private List<String> colors = new ArrayList<>();
-
     @Column(nullable = true)
-    private String material;  // Ex: "Cotton"
+    private String baseColor;
 
     @Column(nullable = true)
     private String brand;  // Ex: "Cotton"
@@ -46,4 +41,13 @@ public class ClothingItem {
     @JoinColumn(name = "user_id")
     @JsonBackReference  // 🚀 Permite serializarea `owner`, dar evită recursivitatea
     private User owner;
+
+    @Column(nullable = true)
+    private String articleType;
+
+    @Column(nullable = true)
+    private String season;
+
+    @Column(nullable = true)
+    private String usage;
 }

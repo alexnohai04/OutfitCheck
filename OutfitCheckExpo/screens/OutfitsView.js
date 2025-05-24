@@ -18,6 +18,7 @@ const OutfitsView = ({ outfits, navigation, selectedCategory, onSelectCategory }
 
     const dataWithAddButton = [{ isAddButton: true }, ...filteredOutfits];
 
+
     const renderOutfitItem = ({ item }) => {
         if (item.isAddButton) {
             return (

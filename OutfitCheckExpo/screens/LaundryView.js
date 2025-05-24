@@ -38,9 +38,9 @@ const LaundryView = () => {
     }, [userId]);
 
     const classifyColor = (colors) => {
-        const normalizedColors = colors.map(c => c.toLowerCase().trim());
-        if (normalizedColors.length === 1 && normalizedColors[0] === "white") return "White";
-        if (normalizedColors.some(c => c.includes("black") || c.includes("dark"))) return "Dark";
+        const normalizedColor = colors.toLowerCase().trim();
+        if (normalizedColor === "white") return "White";
+        if (normalizedColor.includes("black") || normalizedColor.includes("dark")) return "Dark";
         return "Colored";
     };
 
@@ -49,7 +49,7 @@ const LaundryView = () => {
         clothingItems.forEach(item => {
             const washLabels = item.careSymbols?.filter(symbol => symbol.toLowerCase().includes("wash"));
             if (washLabels && washLabels.length > 0) {
-                const colorGroup = classifyColor(item.colors);
+                const colorGroup = classifyColor(item.baseColor);
                 const groupKey = `${washLabels[0]} - ${colorGroup}`;
                 if (!groups[groupKey]) groups[groupKey] = [];
                 groups[groupKey].push(item);
@@ -94,7 +94,7 @@ const LaundryView = () => {
                                     </View>
                                 )}
                                 <Text style={styles.itemText}>{item.category.name}</Text>
-                                <Text style={styles.itemSubText}>{item.colors.join(', ')}</Text>
+                                <Text style={styles.itemSubText}>{item.baseColor}</Text>
                             </View>
                         )}
                     />

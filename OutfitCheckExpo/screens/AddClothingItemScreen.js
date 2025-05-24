@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, {useState, useEffect, useContext, useRef} from "react";
 import {
     View,
     Text,
@@ -11,7 +11,7 @@ import {
     Platform,
     TouchableWithoutFeedback,
     Keyboard,
-    ActivityIndicator
+    ActivityIndicator, ScrollView, FlatList
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -22,15 +22,71 @@ import { processClothingItemAfterBgRemoval } from "../utils/imageUtils";
 import Toast from "react-native-toast-message";
 import namer from "color-namer";
 import {Ionicons} from "@expo/vector-icons";
+import Autocomplete from "react-native-autocomplete-input";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
 
 const AddClothingItemScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
-    const { imageUrl, suggestedCategory, topColors = [], brand: suggestedBrand = "" } = route.params || {};
+    const {
+        imageUrl,
+        suggestedCategory,
+        topColors = [],
+        brand: suggestedBrand = "",
+        subCategory,
+        articleType,
+        baseColour,
+        season,
+        usage
+    } = route.params || {};
+    const [suggestedSubCategory, setSuggestedSubCategory] = useState(subCategory || "");
+    const [suggestedArticleType, setSuggestedArticleType] = useState(articleType || "");
+    const [suggestedBaseColour, setSuggestedBaseColour] = useState(baseColour || "");
+    const [selectedBaseColor, setSelectedBaseColor] = useState(suggestedBaseColour || "");
+    const [seasonOpen, setSeasonOpen] = useState(false);
+    const [selectedSeason, setSelectedSeason] = useState(season || null);
+    const [seasonItems, setSeasonItems] = useState([
+        { label: "🌼 Spring", value: "Spring" },
+        { label: "☀️ Summer", value: "Summer" },
+        { label: "🍂 Fall", value: "Fall" },
+        { label: "❄️ Winter", value: "Winter" },
+    ]);
+
+
+    const [styleOpen, setStyleOpen] = useState(false);
+    const [selectedStyle, setSelectedStyle] = useState(usage || null);
+    const [styleItems, setStyleItems] = useState([
+        { label: "🧢 Casual", value: "Casual" },
+        { label: "🤵 Formal", value: "Formal" },
+        { label: "🎉 Party", value: "Party" },
+        { label: "👔 Smart Casual", value: "Smart Casual" },
+        { label: "🏃 Sports", value: "Sports" },
+    ]);
+
+    const [articleTypeQuery, setArticleTypeQuery] = useState(suggestedArticleType || "");
+    const [articleTypeResults, setArticleTypeResults] = useState([]);
+
+    const articleTypeList = [
+        "Blazers", "Booties", "Capris", "Caps", "Casual Shoes",
+        "Churidar", "Clothing Set", "Dresses", "Flats", "Flip Flops",
+        "Formal Shoes", "Jackets", "Jeans", "Jeggings", "Jumpsuit",
+        "Kurtas", "Leggings", "Rain Jacket", "Robe", "Salwar",
+        "Sandals", "Shapewear", "Shirts", "Shorts", "Shrug",
+        "Skirts", "Socks", "Sports Sandals", "Sports Shoes",
+        "Sweaters", "Sweatshirts", "Swimwear", "Tights", "Tops",
+        "Track Pants", "Tracksuits", "Trousers", "Tshirts", "Tunics"
+    ];
+
+    const [query, setQuery] = useState(suggestedArticleType || '');
+    const [filtered, setFiltered] = useState([]);
+    const [showResults, setShowResults] = useState(false);
+    const inputRef = useRef(null);
+    const isFirstRender = useRef(true);
+
     const [previewBase64, setPreviewBase64] = useState(null);
     const [colors, setColors] = useState([]);
     const [newColorInput, setNewColorInput] = useState("");
-    const [material, setMaterial] = useState("");
     const [category, setCategory] = useState(null);
     const [brand, setBrand] = useState(suggestedBrand);
     const [open, setOpen] = useState(false);
@@ -75,19 +131,41 @@ const AddClothingItemScreen = () => {
     }, [imageUrl]);
 
     useEffect(() => {
+        if (articleTypeQuery === "") {
+            setArticleTypeResults([]);
+        } else {
+            const filtered = articleTypeList.filter(item =>
+                item.toLowerCase().includes(articleTypeQuery.toLowerCase())
+            );
+            setArticleTypeResults(filtered);
+        }
+    }, [articleTypeQuery]);
+
+
+    useEffect(() => {
         if (topColors.length > 0 && colors.length === 0) {
             const translated = topColors.map(c => {
                 const name = namer(c.hex).ntc[0].name;
                 return { name, hex: c.hex };
             });
+
+            let base = suggestedBaseColour;
+            if (!base && translated.length > 0) {
+                base = translated[0].name;
+            }
+
+            setSelectedBaseColor(base);
             setColors(translated);
         }
+
 
         if (suggestedCategory && items.length > 0 && !category) {
             const matched = items.find(cat => cat.label.toLowerCase() === suggestedCategory.toLowerCase());
             if (matched) setCategory(matched.value);
         }
     }, [topColors, suggestedCategory, items]);
+
+
 
     const removeColor = (colorName) => {
         setColors(prev => prev.filter(c => c.name !== colorName));
@@ -100,7 +178,29 @@ const AddClothingItemScreen = () => {
             setNewColorInput("");
         }
     };
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            setShowResults(false);
+            return;
+        }
 
+        if (query.length > 0) {
+            const filteredData = articleTypeList.filter(item =>
+                item.toLowerCase().includes(query.toLowerCase())
+            );
+            setFiltered(filteredData);
+            setShowResults(true);
+        } else {
+            setFiltered([]);
+            setShowResults(false);
+        }
+    }, [query]);
+    const handleSelect = (item) => {
+        setQuery(item);
+        setShowResults(false);
+        inputRef.current.blur();
+    };
     const handleNext = () => {
         if (!imageUrl) return Alert.alert("Error", "No image available!");
         if (colors.length === 0 || !category) {
@@ -132,11 +232,14 @@ const AddClothingItemScreen = () => {
 
         navigation.navigate("AddCareInstructionsScreen", {
             categoryId: category,
-            colors: colors.map(c => c.name),
-            material,
+            //colors: colors.map(c => c.name),
+            baseColor: selectedBaseColor,
             brand,
             imageUrl,
-            link
+            link,
+            usage:selectedStyle,
+            articleType: query,
+            season:selectedSeason,
         });
     };
     return (
@@ -146,84 +249,189 @@ const AddClothingItemScreen = () => {
                 keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
                 style={styles.container}
             >
+
                 <View style={styles.innerContainer}>
                     <View style={styles.headerRow}>
                         <View style={styles.sideSpacer} />
                         <Text style={styles.title}>Add clothing item</Text>
                         <Text style={styles.stepText}>1/2</Text>
                     </View>
-                    {previewBase64 ? (
-                        <Image source={{ uri: previewBase64 }} style={styles.image} />
-                    ) : (
-                        <View style={styles.imagePlaceholder}>
-                            <Text style={styles.imagePlaceholderText}>Loading image...</Text>
-                        </View>
-                    )}
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        nestedScrollEnabled={true}
+                    >
 
-                    <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
-                        Detected colors:
-                    </Text>
-                    <View style={styles.colorListWrap}>
-                        {colors.map((color, idx) => (
-                            <View key={idx} style={[styles.colorBadge, { backgroundColor: color.hex }]}>
-                                <Text style={[styles.badgeText, { color: getContrastingTextColor(color.hex) }]}>
-                                    {color.name}
-                                </Text>
-                                <TouchableOpacity onPress={() => removeColor(color.name)}>
-                                    <Text style={[styles.badgeClose, { color: getContrastingTextColor(color.hex) }]}>✕</Text>
-                                </TouchableOpacity>
+                        {previewBase64 ? (
+                            <Image source={{ uri: previewBase64 }} style={styles.image} />
+                        ) : (
+                            <View style={styles.imagePlaceholder}>
+                                <Text style={styles.imagePlaceholderText}>Loading image...</Text>
                             </View>
-                        ))}
-                    </View>
+                        )}
 
-                    <View style={styles.addColorRow}>
-                        <TextInput
-                            placeholder="Add color"
-                            placeholderTextColor="#A0A0A0"
-                            value={newColorInput}
-                            onChangeText={setNewColorInput}
-                            style={styles.colorInput}
-                        />
-                        <TouchableOpacity onPress={addNewColor} style={styles.addBtn}>
-                            <Text style={styles.addBtnText}>+</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {suggestedCategory && (
                         <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
-                            Suggested category: {suggestedCategory}
+                            Select base color:
                         </Text>
-                    )}
+                        <View style={styles.colorListWrap}>
+                            {colors.map((color, idx) => {
+                                const isSelected = selectedBaseColor === color.name;
+                                return (
+                                    <TouchableOpacity
+                                        key={idx}
+                                        style={[
+                                            styles.colorBadge,
+                                            { backgroundColor: color.hex, borderWidth: isSelected ? 2 : 0, borderColor: getContrastingTextColor(color.hex) }
+                                        ]}
+                                        onPress={() => setSelectedBaseColor(color.name)}
+                                    >
+                                        <Text style={[styles.badgeText, { color: getContrastingTextColor(color.hex) }]}>
+                                            {color.name}
+                                        </Text>
+                                        {isSelected && (
+                                            <Ionicons name="checkmark-circle" size={16} color={getContrastingTextColor(color.hex)} style={{ marginLeft: 4 }} />
+                                        )}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
 
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#FF6B6B" />
-                    ) : (
+
+                        <View style={styles.addColorRow}>
+                            <TextInput
+                                placeholder="Add color"
+                                placeholderTextColor="#A0A0A0"
+                                value={newColorInput}
+                                onChangeText={setNewColorInput}
+                                style={styles.colorInput}
+                            />
+                            <TouchableOpacity onPress={addNewColor} style={styles.addBtn}>
+                                <Text style={styles.addBtnText}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {suggestedCategory && (
+                            <Text style={styles.label}>
+                                Suggested category: {suggestedCategory}
+                            </Text>
+                        )}
+
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#FF6B6B" />
+                        ) : (
+                            <DropDownPicker
+                                open={open}
+                                value={category}
+                                items={items}
+                                setOpen={setOpen}
+                                setValue={setCategory}
+                                setItems={setItems}
+                                containerStyle={styles.dropdownContainer}
+                                style={styles.dropdown}
+                                dropDownContainerStyle={styles.dropdownList}
+                                placeholder="Select a category"
+                                placeholderStyle={styles.placeholderText}
+                                textStyle={styles.dropdownText}
+                                labelStyle={styles.dropdownLabel}
+                                zIndex={open ? 8000 : 1000}        // ✅ dinamic: mare doar când e deschis
+                                zIndexInverse={open ? 1000 : 5000}
+                                onOpen={Keyboard.dismiss}
+                                iconColor="#aaa"
+                                listMode="SCROLLVIEW"
+                            />
+
+                        )}
+
+
+
+                        <Text style={styles.label}>
+                            Season:
+                        </Text>
                         <DropDownPicker
-                            open={open}
-                            value={category}
-                            items={items}
-                            setOpen={setOpen}
-                            setValue={setCategory}
-                            setItems={setItems}
+                            open={seasonOpen}
+                            value={selectedSeason}
+                            items={seasonItems}
+                            setOpen={setSeasonOpen}
+                            setValue={setSelectedSeason}
+                            setItems={setSeasonItems}
                             containerStyle={styles.dropdownContainer}
                             style={styles.dropdown}
                             dropDownContainerStyle={styles.dropdownList}
-                            placeholder="Select a category"
+                            placeholder="Select season"
                             placeholderStyle={styles.placeholderText}
                             textStyle={styles.dropdownText}
                             labelStyle={styles.dropdownLabel}
-                            zIndex={1000}
-                            zIndexInverse={3000}
+                            zIndex={open ? 5000 : 1000}        // ✅ dinamic: mare doar când e deschis
+                            zIndexInverse={open ? 1000 : 5000}
                             onOpen={Keyboard.dismiss}
-                            iconColor="#aaa"
+                            listMode="SCROLLVIEW"
                         />
-                    )}
 
-                    {brand && (
-                        <Text style={{ color: "#aaa", fontSize: 12, marginTop: -10, marginBottom: 10 }}>
-                            Suggested brand: {brand}
+                        <Text style={styles.label}>
+                            Style:
                         </Text>
-                    )}
+                        <DropDownPicker
+                            open={styleOpen}
+                            value={selectedStyle}
+                            items={styleItems}
+                            setOpen={setStyleOpen}
+                            setValue={setSelectedStyle}
+                            setItems={setStyleItems}
+                            containerStyle={styles.dropdownContainer}
+                            style={styles.dropdown}
+                            dropDownContainerStyle={styles.dropdownList}
+                            placeholder="Select style"
+                            placeholderStyle={styles.placeholderText}
+                            textStyle={styles.dropdownText}
+                            labelStyle={styles.dropdownLabel}
+                            zIndex={open ? 6000 : 100}        // ✅ dinamic: mare doar când e deschis
+                            zIndexInverse={open ? 1000 : 5000}
+                            onOpen={Keyboard.dismiss}
+                            listMode="SCROLLVIEW"
+                        />
+
+
+                        <View style={styles.inner}>
+                            <Text style={styles.label}>Article Type</Text>
+                            <View style={styles.autocompleteContainer}>
+                                <TextInput
+                                    ref={inputRef}
+                                    style={styles.input}
+                                    value={query}
+                                    onChangeText={text => setQuery(text)}
+                                    placeholder="Start typing..."
+                                    placeholderTextColor="#aaa"
+                                    onFocus={() => setShowResults(true)}
+                                    onBlur={() => setShowResults(false)}
+                                    onSubmitEditing={Keyboard.dismiss}
+                                    listMode="SCROLLVIEW"
+                                />
+                                {showResults && filtered.length > 0 && (
+                                    <View style={styles.dropdown2}>
+                                        <ScrollView
+                                            keyboardShouldPersistTaps="handled"
+                                            style={styles.dropdown2}
+                                        >
+                                            {filtered.map((item, index) => (
+                                                <TouchableOpacity key={index} onPress={() => handleSelect(item)}>
+                                                    <Text style={styles.item}>{item}</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </ScrollView>
+
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+
+
+
+                        {brand && (
+                            <Text style={styles.label}>
+                                Suggested brand: {brand}
+                            </Text>
+                        )}
                         <TextInput
                             placeholder="Brand (optional)"
                             //placeholderTextColor="#A0A0A0"
@@ -232,22 +440,15 @@ const AddClothingItemScreen = () => {
                             style={styles.input}
                         />
 
-                    <TextInput
-                        placeholder="Material (optional)"
-                        //placeholderTextColor="#A0A0A0"
-                        value={material}
-                        onChangeText={setMaterial}
-                        style={styles.input}
-                    />
-                    <TextInput
-                        value={link}
-                        onChangeText={setLink}
-                        placeholder="Product link (optional)"
-                        style={styles.input}
-                    />
+                            <TextInput
+                                value={link}
+                                onChangeText={setLink}
+                                placeholder="Product link (optional)"
+                                style={styles.input}
+                            />
 
+                    </ScrollView>
                 </View>
-
                 <TouchableOpacity onPress={handleNext} style={styles.button}>
                     <Text style={styles.buttonText}>Next</Text>
                 </TouchableOpacity>
@@ -261,19 +462,43 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#2C2C2C",
-        justifyContent: "center",
+        //justifyContent: "center",
         alignItems: "center",
     },
     innerContainer: {
         width: "90%",
-        height: "83%",
-        alignItems: "center",
+        maxHeight: "83%", // dimensiune fixă
         backgroundColor: "#1E1E1E",
-        paddingVertical: 20,
         borderRadius: 15,
         paddingHorizontal: 15,
-       // marginTop: 10
+        paddingVertical: 20,
+        overflow: "hidden",
+        marginTop: 50// 🔑 previne glitchuri
     },
+
+    dropdown2: {
+        position: 'absolute',
+        bottom: '100%',
+        left: 0,
+        right: 0,
+        backgroundColor: '#3A3A3A',
+        borderColor: '#444',
+        borderWidth: 1,
+        borderRadius: 8,
+        zIndex: 6000,
+        maxHeight: 200,
+    },
+    item: {
+        padding: 12,
+        borderBottomColor: '#555',
+        borderBottomWidth: 1,
+        color: '#fff',
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingBottom: 0, // spațiu sub ultimul câmp
+    },
+
     title: {
         fontSize: 20,
         fontWeight: "bold",
@@ -292,6 +517,7 @@ const styles = StyleSheet.create({
         height: 250,
         marginBottom: 20,
         borderRadius: 15,
+        alignSelf: "center"
     },
     imagePlaceholder: {
         width: 250,
@@ -307,7 +533,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     input: {
-        width: "100%",
+        alignSelf: "stretch",
         padding: 12,
         marginBottom: 15,
         borderWidth: 1,
@@ -317,10 +543,7 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
     },
     label: {
-        color: "#FFFFFF",
-        marginBottom: 5,
-        fontSize: 16,
-        fontWeight: "bold",
+        color: "#aaa", fontSize: 12, marginTop: - 10, marginBottom: 10
     },
     colorList: {
         width: "100%",
@@ -454,7 +677,53 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "500",
     },
-
+    itemText: {
+        padding: 10,
+        fontSize: 16,
+       // color: "#fff",
+        borderBottomColor: "#555",
+        borderBottomWidth: 0.5,
+    },
+    autocompleteContainer: {
+        position: 'relative',
+        //zIndex: 3000,
+        //marginBottom: 20,
+    },
+    autocompleteInput: {
+        backgroundColor: '#3A3A3A',
+        borderWidth: 1,
+        borderColor: '#444',
+        borderRadius: 10,
+        padding: 12,
+        color: '#FFF',
+        fontSize: 16,
+        zIndex: 0
+    },
+    autocompleteListContainer: {
+        position: 'absolute',
+        bottom: '100%',
+        left: 0,
+        right: 0,
+        zIndex: 100
+    },
+    autocompleteList: {
+        backgroundColor: '#3A3A3A',
+        borderWidth: 1,
+        borderColor: '#444',
+        borderRadius: 10,
+        maxHeight: 200,
+        marginTop: 5,
+       // zIndex: 9999,
+    },
+    autocompleteItemWrap: {
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#555',
+    },
+    autocompleteItem: {
+        color: '#FFF',
+        fontSize: 16,
+    },
 });
 
 export default AddClothingItemScreen;

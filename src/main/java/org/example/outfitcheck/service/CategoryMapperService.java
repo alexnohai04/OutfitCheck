@@ -19,8 +19,6 @@ public class CategoryMapperService {
             Map.entry("sweater", "Topwear"),
             Map.entry("cardigan", "Topwear"),
             Map.entry("hoodie", "Topwear"),
-            Map.entry("jacket", "Topwear"),
-            Map.entry("coat", "Topwear"),
             Map.entry("vest", "Topwear"),
             Map.entry("kimono", "Topwear"),
             Map.entry("tunic", "Topwear"),
@@ -29,7 +27,21 @@ public class CategoryMapperService {
             Map.entry("short sleeve", "Topwear"),
             Map.entry("sleeve", "Topwear"),
             Map.entry("hood", "Topwear"),
-            Map.entry("outerwear", "Topwear"),
+
+            Map.entry("outerwear", "Outerwear"),
+            Map.entry("jacket", "Outerwear"),
+            Map.entry("coat", "Outerwear"),
+            Map.entry("rain jacket", "Outerwear"),
+            Map.entry("trench coat", "Outerwear"),
+            Map.entry("overcoat", "Outerwear"),
+            Map.entry("puffer jacket", "Outerwear"),
+            Map.entry("windbreaker", "Outerwear"),
+            Map.entry("parka", "Outerwear"),
+            Map.entry("bomber jacket", "Outerwear"),
+            Map.entry("blazer", "Outerwear"),
+            Map.entry("leather jacket", "Outerwear"),
+            Map.entry("denim jacket", "Outerwear"),
+
 
             // 👖 Bottomwear
             Map.entry("jeans", "Bottomwear"),

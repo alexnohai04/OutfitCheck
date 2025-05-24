@@ -22,7 +22,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class ClothingItemService {
@@ -32,10 +36,11 @@ public class ClothingItemService {
     private final VisionService visionService;
     private final CategoryMapperService categoryMapperService;
     private final ColorMapperService colorMapperService;
+    private final AsyncClothingService asyncClothingService;
 
     public ClothingItemService(ClothingItemRepository clothingItemRepository,
                                ClothingCategoryRepository categoryRepository,
-                               UserRepository userRepository, VisionService visionService, CategoryMapperService categoryMapperService, ColorMapperService colorMapperService) {
+                               UserRepository userRepository, VisionService visionService, CategoryMapperService categoryMapperService, ColorMapperService colorMapperService, AsyncClothingService asyncClothingService) {
         this.clothingItemRepository = clothingItemRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
@@ -43,8 +48,9 @@ public class ClothingItemService {
         this.categoryMapperService = categoryMapperService;
 
         this.colorMapperService = colorMapperService;
+        this.asyncClothingService = asyncClothingService;
     }
-    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, List<String> colors, String material, String brand, String imageUrl, String link, List<String> careSymbols) {
+    public ClothingItem addClothingItemWithImageUrl(Long userId, Long categoryId, String baseColor, String brand, String imageUrl, String link, List<String> careSymbols, String articleType, String season, String usage) {
         Optional<ClothingCategory> categoryOpt = categoryRepository.findById(categoryId);
         Optional<User> userOpt = userRepository.findById(userId);
 
@@ -56,13 +62,15 @@ public class ClothingItemService {
         }
 
         ClothingItem clothingItem = new ClothingItem();
-        clothingItem.setColors(colors);
-        clothingItem.setMaterial(material);
+        clothingItem.setBaseColor(baseColor);
         clothingItem.setCategory(categoryOpt.get());
         clothingItem.setOwner(userOpt.get());
         clothingItem.setBrand(brand);
         clothingItem.setLink(link);
         clothingItem.setCareSymbols(careSymbols);
+        clothingItem.setArticleType(articleType);
+        clothingItem.setSeason(season);
+        clothingItem.setUsage(usage);
         //clothingItem.setImageUrl(imageUrl); // direct linkul complet
 
         clothingItem = clothingItemRepository.save(clothingItem);
@@ -70,6 +78,10 @@ public class ClothingItemService {
         clothingItem.setImageUrl(saveClothingItemImage(clothingItem.getId(),imageUrl));
 
         return clothingItemRepository.save(clothingItem);
+    }
+
+    public List<ClothingItem> getClothingItemsByIds(List<Long> ids) {
+        return clothingItemRepository.findAllById(ids);
     }
 
     public void sendToFlaskRemoveBg(String localPath) {
@@ -144,7 +156,6 @@ public class ClothingItemService {
             throw new RuntimeException("Eroare la salvarea finală a imaginii", e);
         }
     }
-
     public VisionAnalysisResponse uploadTemporaryImage(MultipartFile file) {
         try {
             if (file.isEmpty()) {
@@ -162,23 +173,50 @@ public class ClothingItemService {
 
             sendToFlaskRemoveBg(filePath.toString());
 
-            Map<String, Object> visionData = visionService.detectLabelsAndColorsFromFilename(fileName);
+            // 🔥 Trimitere în paralel
+            CompletableFuture<Map<String, Object>> visionFuture = CompletableFuture.supplyAsync(() ->
+                    {
+                        try {
+                            return visionService.detectLabelsAndColorsFromFilename(fileName);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+            );
+
+            CompletableFuture<Map<String, String>> flaskFuture = asyncClothingService.callFlaskClassifierAsync(filePath.toFile());
+
+            // Așteaptă ambele
+            CompletableFuture.allOf(visionFuture, flaskFuture).join();
+
+            Map<String, Object> visionData = visionFuture.get();
+            Map<String, String> aiData = flaskFuture.get();
+
             List<String> labels = (List<String>) visionData.get("objects");
             List<String> colors = (List<String>) visionData.get("colors");
             String brand = (String) visionData.get("brand");
 
-            // ✅ Mapăm categoria
             String suggestedCategory = categoryMapperService.mapLabelToCategory(labels);
             List<ColorInfo> topColors = colorMapperService.mapAndGroupColors(colors);
 
-            return new VisionAnalysisResponse(fileName, suggestedCategory, topColors, brand);
+            VisionAnalysisResponse response = new VisionAnalysisResponse();
+            response.setFileName(fileName);
+            response.setSuggestedCategory(suggestedCategory);
+            response.setTopColors(topColors);
+            response.setBrand(brand);
+            response.setSubCategory(aiData.get("subCategory"));
+            response.setArticleType(aiData.get("articleType"));
+            response.setBaseColour(aiData.get("baseColour"));
+            response.setSeason(aiData.get("season"));
+            response.setUsage(aiData.get("usage"));
 
-        } catch (IOException e) {
-            throw new RuntimeException("Eroare la salvarea imaginii temporare", e);
+            return response;
+
         } catch (Exception e) {
-            throw new RuntimeException("Eroare la analiza Vision", e);
+            throw new RuntimeException("Eroare la analiza imaginii", e);
         }
     }
+
 
 
 

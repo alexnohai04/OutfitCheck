@@ -17,4 +17,10 @@ public class VisionAnalysisResponse {
     private List<ColorInfo> topColors;
     private String brand;
 
+    private String subCategory;
+    private String articleType;
+    private String baseColour;
+    private String season;
+    private String usage;
+
 }

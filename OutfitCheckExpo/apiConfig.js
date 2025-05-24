@@ -21,6 +21,8 @@ const API_URLS = {
     GET_CLOTHING_ITEMS_BY_USER: `${API_BASE}/api/clothing/user`,
     DELETE_CLOTHING_ITEM: (itemId) => `${API_BASE}/api/clothing/${itemId}`,
 
+    GET_CLOTHING_ITEMS_BY_IDS: `${API_BASE}/api/clothing/by-ids`,
+
     GET_USER_PROFILE: `${API_BASE}/users/profile`,
 
     UPLOAD_PROFILE_PIC: (userId) => `${API_BASE}/users/upload-profile-pic/${userId}`,
@@ -52,7 +54,10 @@ const API_URLS = {
     UPLOAD_CLOTHING_IMAGE: `${API_BASE}/api/clothing/upload-temp-image`,
     ANALYZE_LABEL:`${API_BASE}/api/openai/analyze-label`,
 
-    UPDATE_OUTFIT: (outfitId) =>`${API_BASE}/api/outfits/${outfitId}/toggle-visibility`
+    UPDATE_OUTFIT: (outfitId) =>`${API_BASE}/api/outfits/${outfitId}/toggle-visibility`,
+
+    GENERATE_OUTFIT: `${API_BASE}/api/recommendations/generate`,
+
 };
 
 export default API_URLS;

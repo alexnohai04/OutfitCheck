@@ -32,10 +32,11 @@ const ClothesView = ({ clothes, categories, selectedCategory, onSelectCategory, 
                     </View>
                 )}
                 <View style={styles.infoContainer}>
-                    <Text style={styles.itemText}>Colors: {item.colors.join(', ')}</Text>
-                    <Text style={styles.itemText}>Material: {item.material}</Text>
+                    <Text style={styles.itemText}>Base color: {item.baseColor}</Text>
                     <Text style={styles.itemText}>Category: {item.category.name}</Text>
                     <Text style={styles.itemText}>Brand: {item.brand}</Text>
+                    <Text style={styles.itemText}>Style: {item.usage}</Text>
+                    <Text style={styles.itemText}>Season: {item.season}</Text>
 
                     {item.careSymbols && item.careSymbols.length > 0 && (
                         <View style={styles.careIconsContainer}>

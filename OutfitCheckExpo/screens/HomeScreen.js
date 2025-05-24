@@ -11,6 +11,8 @@ import globalStyles from "../styles/globalStyles";
 import AddCareInstructionsScreen from "./AddCareInstructionsScreen";
 import AddClothingItemScreen from "./AddClothingItemScreen";
 import TodaysFitScreen from "./TodaysFitScreen";
+import GenerateFormView from "./GenerateFormView";
+import TodaysFitScreenOLD from "./TodaysFitScreenOLD";
 
 const Tab = createBottomTabNavigator();
 
@@ -43,16 +45,22 @@ const AppTabs = () => {
                             <TouchableOpacity
                                 {...props}
                                 onPress={() => setShowCameraModal(true)}
-                                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+                                style={{
+                                    top: -30,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    width: 70,
+                                    height: 70,
+                                    borderRadius: 35,
+                                    backgroundColor: '#FF6B6B',
+                                    shadowColor: '#000',
+                                    shadowOpacity: 0.3,
+                                    shadowOffset: { width: 0, height: 6 },
+                                    shadowRadius: 10,
+                                    elevation: 8,
+                                }}
                             >
-                                <Ionicons
-                                    name="camera"
-                                    size={24}
-                                    color={props.accessibilityState?.selected ? "#FF6B6B" : "gray"}
-                                />
-                                <Text style={{ fontSize: 12, color: props.accessibilityState?.selected ? "#FF6B6B" : "gray" }}>
-                                    Camera
-                                </Text>
+                                <Ionicons name="camera" size={30} color="#FFFFFF" />
                             </TouchableOpacity>
                         ),
                     }}
@@ -60,8 +68,9 @@ const AppTabs = () => {
                     {() => null}
                 </Tab.Screen>
 
+
                 <Tab.Screen name="Wardrobe" component={WardrobeScreen} />
-                {/*<Tab.Screen name="Test" component={AddCareInstructionsScreen} />*/}
+                {/*<Tab.Screen name="Test" component={GenerateFormView} />*/}
                 <Tab.Screen name="Profile" component={ProfileScreen} />
             </Tab.Navigator>
 
