@@ -9,6 +9,8 @@ import org.example.outfitcheck.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,15 @@ public class FollowService {
                 .orElseThrow(() -> new RuntimeException("Other user not found"));
 
         return followRepository.existsByFollowerAndFollowing(currentUser, otherUser);
+    }
+
+    public List<Long> getFollowingIds(Long currentUserId) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        return followRepository.findAllByFollower(currentUser).stream()
+                .map(follow -> follow.getFollowing().getId())
+                .collect(Collectors.toList());
     }
 
     @Transactional

@@ -1,10 +1,12 @@
 package org.example.outfitcheck.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.List;
 
-@Getter @Setter
+
+@Getter @Setter @AllArgsConstructor
 public class OutfitDTO {
     private String name;
     private Long creatorId;

@@ -28,6 +28,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final OutfitRepository outfitRepository;
     private final PostMapper postMapper;
+    private final FollowService followService;
 
     public PostResponseDTO createPost(PostRequestDTO dto, MultipartFile imageFile) {
         User user = userRepository.findById(dto.getUserId())
@@ -58,6 +59,20 @@ public class PostService {
                 .map(post -> postMapper.toDto(post, currentUserId))
                 .collect(Collectors.toList());
     }
+    public List<PostResponseDTO> getFollowingPosts(Long currentUserId) {
+        // 1. Ia lista de userId-uri pe care currentUserId îi urmăreşte
+        List<Long> followingIds = followService.getFollowingIds(currentUserId);
+
+        // 2. Preia toate postările acelor useri, ordonate (de ex) descrescător după dată
+        List<Post> posts = postRepository
+                .findByUserIdInOrderByPostedAtDesc(followingIds);
+
+        // 3. Converteşte la DTO-uri (în funcţie de vizibilitate, like-uri, etc)
+        return posts.stream()
+                .map(post -> postMapper.toDto(post, currentUserId))
+                .collect(Collectors.toList());
+    }
+
     public List<PostResponseDTO> getPostsByUserId(Long userId, Long currentUserId) {
         List<Post> posts = postRepository.findByUserId(userId);
         return posts.stream()

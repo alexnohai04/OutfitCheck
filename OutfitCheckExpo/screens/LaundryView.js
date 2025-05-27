@@ -1,5 +1,3 @@
-// components/wardrobe/LaundryView.js
-
 import React, { useEffect, useState, useContext } from "react";
 import {
     View,
@@ -38,9 +36,9 @@ const LaundryView = () => {
     }, [userId]);
 
     const classifyColor = (colors) => {
-        const normalizedColor = colors.toLowerCase().trim();
-        if (normalizedColor === "white") return "White";
-        if (normalizedColor.includes("black") || normalizedColor.includes("dark")) return "Dark";
+        const normalized = colors?.toLowerCase().trim();
+        if (normalized === "white") return "White";
+        if (normalized.includes("black") || normalized.includes("dark")) return "Dark";
         return "Colored";
     };
 
@@ -48,58 +46,79 @@ const LaundryView = () => {
         const groups = {};
         clothingItems.forEach(item => {
             const washLabels = item.careSymbols?.filter(symbol => symbol.toLowerCase().includes("wash"));
-            if (washLabels && washLabels.length > 0) {
+            if (!washLabels || washLabels.length === 0) return;
+            const first = washLabels[0].toLowerCase();
+            // skip Do Not Wash items
+            if (first.includes("do not wash")) return;
+
+            let groupKey;
+            if (first.includes("hand")) {
+                groupKey = "Hand Wash";
+            } else {
                 const colorGroup = classifyColor(item.baseColor);
-                const groupKey = `${washLabels[0]} - ${colorGroup}`;
-                if (!groups[groupKey]) groups[groupKey] = [];
-                groups[groupKey].push(item);
+                groupKey = `${washLabels[0]} - ${colorGroup}`;
             }
+            if (!groups[groupKey]) groups[groupKey] = [];
+            groups[groupKey].push(item);
         });
         return groups;
     };
 
+    const sortByLaundryFlag = (items) => [
+        ...items.filter(item => item.inLaundry),
+        ...items.filter(item => !item.inLaundry)
+    ];
+
     const groupedItems = groupByMachine();
 
-    // if (loading) {
-    //     return (
-    //         <View style={styles.loadingContainer}>
-    //             <ActivityIndicator size="large" color="#FF6B6B" />
-    //         </View>
-    //     );
-    // }
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FF6B6B" />
+            </View>
+        );
+    }
 
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-            {Object.entries(groupedItems).map(([label, items]) => (
-                <View key={label} style={styles.groupContainer}>
-                    <View style={styles.groupHeader}>
-                        {SYMBOL_ICONS[label.split(" - ")[0]] && (
-                            <Image source={SYMBOL_ICONS[label.split(" - ")[0]]} style={styles.labelIcon} resizeMode="contain" />
-                        )}
-                        <Text style={styles.groupTitle}>{label}</Text>
+            {Object.entries(groupedItems).map(([label, items]) => {
+                const sorted = sortByLaundryFlag(items);
+                return (
+                    <View key={label} style={styles.groupContainer}>
+                        <View style={styles.groupHeader}>
+                            {SYMBOL_ICONS[label.split(" - ")[0]] && (
+                                <Image source={SYMBOL_ICONS[label.split(" - ")[0]]} style={styles.labelIcon} resizeMode="contain" />
+                            )}
+                            <Text style={styles.groupTitle}>{label}</Text>
+                        </View>
+                        <FlatList
+                            data={sorted}
+                            keyExtractor={item => item.id.toString()}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.itemsRow}
+                            renderItem={({ item }) => (
+                                <View
+                                    style={[
+                                        styles.clothingItemContainer,
+                                        !item.inLaundry && styles.inactiveItem
+                                    ]}
+                                >
+                                    {item.base64Image ? (
+                                        <Image source={{ uri: item.base64Image }} style={styles.image} />
+                                    ) : (
+                                        <View style={styles.imagePlaceholder}>
+                                            <Text style={styles.imagePlaceholderText}>No Image</Text>
+                                        </View>
+                                    )}
+                                    <Text style={styles.itemText}>{item.category.name}</Text>
+                                    <Text style={styles.itemSubText}>{item.baseColor}</Text>
+                                </View>
+                            )}
+                        />
                     </View>
-                    <FlatList
-                        data={items}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.itemsRow}
-                        renderItem={({ item }) => (
-                            <View style={styles.clothingItemContainer}>
-                                {item.base64Image ? (
-                                    <Image source={{ uri: item.base64Image }} style={styles.image} />
-                                ) : (
-                                    <View style={styles.imagePlaceholder}>
-                                        <Text style={styles.imagePlaceholderText}>No Image</Text>
-                                    </View>
-                                )}
-                                <Text style={styles.itemText}>{item.category.name}</Text>
-                                <Text style={styles.itemSubText}>{item.baseColor}</Text>
-                            </View>
-                        )}
-                    />
-                </View>
-            ))}
+                );
+            })}
         </ScrollView>
     );
 };
@@ -142,6 +161,9 @@ const styles = StyleSheet.create({
         padding: 10,
         width: 120,
         alignItems: "center",
+    },
+    inactiveItem: {
+        opacity: 0.2,
     },
     image: {
         width: 100,

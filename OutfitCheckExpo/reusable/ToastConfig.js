@@ -28,6 +28,18 @@ export const toastConfig = {
             <View style={[styles.staticProgressBar, { backgroundColor: '#FF6B6B' }]} />
         </View>
     ),
+    info: ({ text1, text2 }) => (
+        <View style={[styles.toastContainer, styles.successBorder]}>
+            <View style={styles.iconContainer}>
+                <Feather name="info" size={24} color="#32CD80" />
+            </View>
+            <View style={styles.textContainer}>
+                <Text style={styles.text1}>{text1}</Text>
+                {text2 ? <Text style={styles.text2}>{text2}</Text> : null}
+            </View>
+            <View style={[styles.staticProgressBar, { backgroundColor: '#32CD80' }]} />
+        </View>
+    ),
 };
 
 const styles = StyleSheet.create({

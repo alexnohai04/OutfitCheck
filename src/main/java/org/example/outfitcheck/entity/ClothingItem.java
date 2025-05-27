@@ -50,4 +50,7 @@ public class ClothingItem {
 
     @Column(nullable = true)
     private String usage;
+
+    @Column(nullable = true)
+    private boolean inLaundry = false;
 }

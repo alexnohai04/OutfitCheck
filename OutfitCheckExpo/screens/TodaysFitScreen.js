@@ -27,6 +27,7 @@ import Animated, {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GenerateFormView from "./GenerateFormView";
 import OutfitSwiper from "./OuftitSwiper";
+import ModeSelectorModal from "../reusable/ModeSelectorModal";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
@@ -56,7 +57,10 @@ const TodaysFitScreen = () => {
 
     const [currentGeneratedIndex, setCurrentGeneratedIndex] = useState(0);
 
-
+    const modeOptions = [
+        { id: 'shuffle', label: 'Shuffle through your fits', icon: 'shuffle-outline' },
+        { id: 'generate', label: 'Generate Fit', icon: 'sparkles-outline' },
+    ];
 
 
 
@@ -276,38 +280,14 @@ const TodaysFitScreen = () => {
 
 
                 {/* Modalul de selecție mod */}
-                <Modal
+                <ModeSelectorModal
                     visible={modeModalVisible}
-                    animationType="fade"
-                    transparent
-                    onRequestClose={() => setModeModalVisible(false)}
-                >
-                    <TouchableWithoutFeedback onPress={() => setModeModalVisible(false)}>
-                    <View style={styles.modalOverlay}>
-                            <TouchableWithoutFeedback>
-                                <View style={styles.modalContentEnhanced}>
-                                    <View style={globalStyles.dragBar} />
-                                    <Text style={styles.modalTitle}>Select your mode</Text>
-                                    <View style={styles.modeOptionsContainer}>
-                                        {[
-                                            { id: "shuffle", label: "Shuffle through your fits", icon: "shuffle-outline" },
-                                            { id: "generate", label: "Generate Fit", icon: "sparkles-outline" },
-                                        ].map((option) => (
-                                            <TouchableOpacity
-                                                key={option.id}
-                                                style={[styles.modeOptionBox, fitMode === option.id && styles.modeSelected]}
-                                                onPress={() => handleModeSwitch(option.id)}
-                                            >
-                                                <Ionicons name={option.icon} size={24} color="#FFF" />
-                                                <Text style={styles.modeLabel}>{option.label}</Text>
-                                            </TouchableOpacity>
-                                        ))}
-                                    </View>
-                                </View>
-                            </TouchableWithoutFeedback>
-                        </View>
-                    </TouchableWithoutFeedback>
-                </Modal>
+                    options={modeOptions}
+                    selectedId={fitMode}
+                    title="Select your mode"
+                    onSelect={handleModeSwitch}
+                    onClose={() => setModeModalVisible(false)}
+                />
             </SafeAreaView>
         </GestureHandlerRootView>
 
@@ -336,9 +316,9 @@ const styles = StyleSheet.create({
         paddingBottom: 12,
     },
     header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
     title: {

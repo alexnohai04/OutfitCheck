@@ -1,5 +1,7 @@
 package org.example.outfitcheck.service;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.example.outfitcheck.dto.ColorInfo;
 import org.example.outfitcheck.dto.VisionAnalysisResponse;
 import org.example.outfitcheck.entity.ClothingCategory;
@@ -253,5 +255,15 @@ public class ClothingItemService {
             return true;
         }
         return false;
+    }
+
+    @Transactional
+    public ClothingItem toggleInLaundry(Long id) {
+        ClothingItem item = clothingItemRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("ClothingItem not found with id " + id));
+
+        item.setInLaundry(!item.isInLaundry());
+        // save() e opțional aici, dar îl folosim ca să fim siguri că persistă
+        return clothingItemRepository.save(item);
     }
 }

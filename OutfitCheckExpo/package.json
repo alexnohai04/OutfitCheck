@@ -26,6 +26,7 @@
     "color-namer": "^1.4.0",
     "dayjs": "^1.11.13",
     "expo": "~52.0.41",
+    "expo-av": "~15.0.2",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.8",
     "expo-file-system": "~18.0.11",

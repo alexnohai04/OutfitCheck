@@ -20,8 +20,10 @@ const API_URLS = {
     GET_CLOTHING_CATEGORIES: `${API_BASE}/api/categories/all`,
     GET_CLOTHING_ITEMS_BY_USER: `${API_BASE}/api/clothing/user`,
     DELETE_CLOTHING_ITEM: (itemId) => `${API_BASE}/api/clothing/${itemId}`,
-
+    TOGGLE_LAUNDRY: (itemId) => `${API_BASE}/api/clothing/${itemId}/toggle-laundry`,
     GET_CLOTHING_ITEMS_BY_IDS: `${API_BASE}/api/clothing/by-ids`,
+    GET_OUTFITS_CONTAINING_CLOTHING_ITEM: (itemId) => `${API_BASE}/api/outfits/clothing-items/${itemId}/outfits`,
+
 
     GET_USER_PROFILE: `${API_BASE}/users/profile`,
 
@@ -41,6 +43,7 @@ const API_URLS = {
 
     ADD_POST: `${API_BASE}/api/posts`, // POST (multipart/form-data)
     GET_ALL_POSTS: (currentUserId) => `${API_BASE}/api/posts?currentUserId=${currentUserId}`, // GET
+    GET_FOLLOWING_POSTS: (currentUserId) => `${API_BASE}/api/posts/following?currentUserId=${currentUserId}`,
     TOGGLE_LIKE: (postId, userId) => `${API_BASE}/api/posts/${postId}/like?userId=${userId}`, // POST
     DELETE_POST: (postId) => `${API_BASE}/api/posts/${postId}`,
 

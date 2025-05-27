@@ -13,6 +13,7 @@ import AddClothingItemScreen from "./AddClothingItemScreen";
 import TodaysFitScreen from "./TodaysFitScreen";
 import GenerateFormView from "./GenerateFormView";
 import TodaysFitScreenOLD from "./TodaysFitScreenOLD";
+import NotchBackground from "../reusable/NotchBackground";
 
 const Tab = createBottomTabNavigator();
 
@@ -21,6 +22,7 @@ const AppTabs = () => {
 
     return (
         <>
+
             <Tab.Navigator
                 screenOptions={({ route }) => ({
                     tabBarIcon: ({ color, size }) => {
@@ -33,6 +35,7 @@ const AppTabs = () => {
                     tabBarActiveTintColor: "#FF6B6B",
                     tabBarInactiveTintColor: "gray",
                     tabBarStyle: globalStyles.tabBar,
+                    tabBarBackground: () => <NotchBackground />,
                     headerShown: false,
                 })}
             >
@@ -49,13 +52,14 @@ const AppTabs = () => {
                                     top: -30,
                                     justifyContent: 'center',
                                     alignItems: 'center',
+                                    alignSelf: 'center',
                                     width: 70,
                                     height: 70,
                                     borderRadius: 35,
                                     backgroundColor: '#FF6B6B',
-                                    shadowColor: '#000',
-                                    shadowOpacity: 0.3,
-                                    shadowOffset: { width: 0, height: 6 },
+                                    shadowColor: '#FF6B6B',
+                                    shadowOpacity: 0.2,
+                                   // shadowOffset: { width: 0, height: 6 },
                                     shadowRadius: 10,
                                     elevation: 8,
                                 }}

@@ -11,9 +11,11 @@ import org.example.outfitcheck.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/outfits")
@@ -21,7 +23,6 @@ public class OutfitController {
     private final OutfitRepository outfitRepository;
     private final UserRepository userRepository;
     private final ClothingItemRepository clothingItemRepository;
-
     private final JwtUtil jwtUtil;
 
 
@@ -111,6 +112,16 @@ public class OutfitController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid token.");
         }
+    }
+
+    @GetMapping("/clothing-items/{itemId}/outfits")
+    public ResponseEntity<List<Outfit>> getOutfitsByClothingItem(@PathVariable Long itemId) {
+        ClothingItem item = clothingItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clothing item not found"));
+
+        List<Outfit> outfits = outfitRepository.findAllByClothingItemsContaining(item);
+
+        return ResponseEntity.ok(outfits);
     }
 
 }

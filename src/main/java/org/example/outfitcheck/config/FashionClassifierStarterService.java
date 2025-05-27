@@ -49,20 +49,22 @@ public class FashionClassifierStarterService {
 
     @PreDestroy
     public void stopFlaskService() {
-        if (flaskProcess != null && flaskProcess.isAlive()) {
-            flaskProcess.destroy();
+        if (flaskProcess != null) {
+            long pid = flaskProcess.pid();
+            System.out.println("🛑 Killing FashionTagger Flask process tree (PID=" + pid + ")...");
             try {
-                if (!flaskProcess.waitFor(5, TimeUnit.SECONDS)) {
-                    flaskProcess.destroyForcibly(); // 💣 dacă nu răspunde
-                    System.out.println("⚠️ Forced Flask shutdown.");
-                } else {
-                    System.out.println("🛑 Flask process exited cleanly.");
-                }
-            } catch (InterruptedException e) {
-                flaskProcess.destroyForcibly();
-                Thread.currentThread().interrupt();
+                // taskkill /F (forțează) /T (proces + copii) /PID <pid>
+                Process kill = new ProcessBuilder(
+                        "taskkill", "/F", "/T", "/PID", Long.toString(pid)
+                ).start();
+                kill.waitFor(5, TimeUnit.SECONDS);
+                System.out.println("✅ Flask process tree terminated.");
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
 
 }
+
+

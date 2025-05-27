@@ -53,6 +53,13 @@ public class PostController {
     ) {
         return ResponseEntity.ok(postService.getPostsByUserId(userId, currentUserId));
     }
+    @GetMapping("/following")
+    public ResponseEntity<List<PostResponseDTO>> getFollowingPosts(
+            @RequestParam Long currentUserId
+    ) {
+        List<PostResponseDTO> posts = postService.getFollowingPosts(currentUserId);
+        return ResponseEntity.ok(posts);
+    }
 
     @PostMapping("/{postId}/like")
     public ResponseEntity<Void> toggleLike(@PathVariable Long postId, @RequestParam Long userId) {

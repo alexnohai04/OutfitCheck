@@ -1,5 +1,6 @@
 package org.example.outfitcheck.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.example.outfitcheck.dto.ClothingItemRequest;
 import org.example.outfitcheck.dto.VisionAnalysisResponse;
 import org.example.outfitcheck.entity.ClothingItem;
@@ -88,5 +89,15 @@ public class ClothingItemController {
     @GetMapping("/image/{filename:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable String filename) {
         return clothingItemService.serveClothingImage(filename);
+    }
+
+    @PatchMapping("/{id}/toggle-laundry")
+    public ResponseEntity<ClothingItem> toggleInLaundry(@PathVariable Long id) {
+        try {
+            ClothingItem updated = clothingItemService.toggleInLaundry(id);
+            return ResponseEntity.ok(updated);
+        } catch (EntityNotFoundException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

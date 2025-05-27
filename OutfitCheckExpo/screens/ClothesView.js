@@ -1,5 +1,3 @@
-// components/wardrobe/ClothesView.js
-
 import React from "react";
 import {
     View,
@@ -15,14 +13,48 @@ import { Swipeable } from "react-native-gesture-handler";
 import { SYMBOL_ICONS } from "../constants/symbolIcons";
 import globalStyles from "../styles/globalStyles";
 
-const ClothesView = ({ clothes, categories, selectedCategory, onSelectCategory, onDelete }) => {
+/**
+ * Props:
+ * - clothes: array of clothing items
+ * - categories: array of category names
+ * - selectedCategory: currently selected category
+ * - onSelectCategory: callback when category is selected
+ * - onDelete: callback when Delete is confirmed (itemId)
+ * - onWash: callback when Wash is triggered (itemId)
+ */
+const ClothesView = ({ clothes, categories, selectedCategory, onSelectCategory, onDelete, onWash }) => {
     const filteredClothes = selectedCategory === "All"
         ? clothes
         : clothes.filter(item => item.category.name === selectedCategory);
 
+    const renderLeftActions = (itemId) => (
+        <TouchableOpacity style={styles.washButton} onPress={() => onWash(itemId)}>
+            <Text style={styles.washText}>Wash</Text>
+        </TouchableOpacity>
+    );
+
+    const renderRightActions = (itemId) => (
+        <TouchableOpacity style={globalStyles.deleteButton} onPress={() => confirmDelete(itemId)}>
+            <Text style={globalStyles.deleteText}>Delete</Text>
+        </TouchableOpacity>
+    );
+
+    const confirmDelete = (itemId) => {
+        Alert.alert(
+            "Are you sure?",
+            "Do you really want to delete this clothing item?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Yes", onPress: () => onDelete(itemId) }
+            ]
+        );
+    };
 
     const renderClothingItem = ({ item }) => (
-        <Swipeable renderRightActions={() => renderRightActions(item.id)}>
+        <Swipeable
+            renderLeftActions={() => renderLeftActions(item.id)}
+            renderRightActions={() => renderRightActions(item.id)}
+        >
             <View style={styles.clothingItemContainer}>
                 {item.base64Image ? (
                     <Image source={{ uri: item.base64Image }} style={styles.image} />
@@ -57,23 +89,6 @@ const ClothesView = ({ clothes, categories, selectedCategory, onSelectCategory, 
             </View>
         </Swipeable>
     );
-
-    const renderRightActions = (itemId) => (
-        <TouchableOpacity style={globalStyles.deleteButton} onPress={() => confirmDelete(itemId)}>
-            <Text style={globalStyles.deleteText}>Delete</Text>
-        </TouchableOpacity>
-    );
-
-    const confirmDelete = (itemId) => {
-        Alert.alert(
-            "Are you sure?",
-            "Do you really want to delete this clothing item?",
-            [
-                { text: "Cancel", style: "cancel" },
-                { text: "Yes", onPress: () => onDelete(itemId) }
-            ]
-        );
-    };
 
     return (
         <View style={{ flex: 1 }}>
@@ -133,6 +148,9 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 16,
     },
+    listContainer: {
+        paddingBottom: 100,
+    },
     clothingItemContainer: {
         flexDirection: "row",
         backgroundColor: "#3A3A3A",
@@ -179,8 +197,20 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
     },
-    listContainer: {
-        paddingBottom: 100,
+    // Swipe-to-wash button
+    washButton: {
+        backgroundColor: "#4EA8DE",
+        justifyContent: "center",
+        alignItems: "center",
+        width: 100,
+        marginVertical: 5,
+        borderRadius: 10,
+        marginLeft: 15,
+    },
+    washText: {
+        color: "#FFFFFF",
+        fontWeight: "600",
+        fontSize: 16,
     },
 });
 

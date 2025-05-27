@@ -19,8 +19,8 @@ delete from posts;
 
 delete public_visible from outfits;
 
-UPDATE outfits
-SET visible = false;
+UPDATE clothing_items
+SET in_laundry = false;
 
 
 

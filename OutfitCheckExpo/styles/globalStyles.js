@@ -5,7 +5,7 @@ const globalStyles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#1E1E1E",
+        backgroundColor: "#1c1c1c",
     },
     title: {
         fontSize: 24,
@@ -24,7 +24,7 @@ const globalStyles = StyleSheet.create({
         color: "#FFFFFF",
     },
     button: {
-        backgroundColor: "#FF6B6B",
+        backgroundColor: "#D9534F",
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,
@@ -51,14 +51,14 @@ const globalStyles = StyleSheet.create({
         bottom: 16,
         left: 16,
         right: 16,
-        backgroundColor: '#2C2C2E',
+        backgroundColor: 'transparent',
         borderRadius: 40,
         height: 70,
         paddingBottom: 10,
         paddingTop: 10,
         elevation: 8,
         shadowColor: '#000',
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.4,
         shadowOffset: { width: 0, height: 6 },
         shadowRadius: 10,
         borderTopWidth: 0,
@@ -78,7 +78,7 @@ const globalStyles = StyleSheet.create({
         top: -15, // **Urcă puțin peste navbar, exact cum ai vrut**
     },
     deleteButton: {
-        backgroundColor: '#FF3B30',
+        backgroundColor: '#FF4D4D',
         justifyContent: 'center',
         alignItems: 'center',
         width: 80,
