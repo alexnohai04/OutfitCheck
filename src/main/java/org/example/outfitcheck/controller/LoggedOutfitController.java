@@ -2,7 +2,9 @@ package org.example.outfitcheck.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.outfitcheck.dto.LoggedOutfitDTO;
+import org.example.outfitcheck.entity.ClothingItem;
 import org.example.outfitcheck.entity.LoggedOutfit;
+import org.example.outfitcheck.entity.Outfit;
 import org.example.outfitcheck.service.LoggedOutfitService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +31,12 @@ public class LoggedOutfitController {
     }
 
     @GetMapping("/by-user-and-date")
-    public ResponseEntity<LoggedOutfit> getByUserAndDate(
+    public ResponseEntity<List<ClothingItem>> getByUserAndDate(
             @RequestParam Long userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         return loggedOutfitService.getOutfitByUserAndDate(userId, date)
-                .map(ResponseEntity::ok)
+                .map(logged -> ResponseEntity.ok(logged.getOutfit().getClothingItems()))
                 .orElse(ResponseEntity.notFound().build());
     }
 

@@ -41,6 +41,9 @@ const API_URLS = {
     LOG_OUTFIT: `${API_BASE}/api/logged-outfits`,
     DELETE_LOGGED_OUTFIT: (userId, date) => `${API_BASE}/api/logged-outfits/${userId}/${date}`,
 
+    GET_TODAY_OUTFIT: (userId, date) =>
+        `${API_BASE}/api/logged-outfits/by-user-and-date?userId=${userId}&date=${date}`,
+
     ADD_POST: `${API_BASE}/api/posts`, // POST (multipart/form-data)
     GET_ALL_POSTS: (currentUserId) => `${API_BASE}/api/posts?currentUserId=${currentUserId}`, // GET
     GET_FOLLOWING_POSTS: (currentUserId) => `${API_BASE}/api/posts/following?currentUserId=${currentUserId}`,

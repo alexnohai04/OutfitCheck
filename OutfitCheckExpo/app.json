@@ -8,6 +8,9 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "logoDevKey": "sk_MFRBhBAjSHWQJ9TD4Il4BQ"
+    },
     "updates": {
       "enabled": false
     },

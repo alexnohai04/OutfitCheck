@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 export const toastConfig = {
     success: ({ text1, text2 }) => (
@@ -28,8 +29,9 @@ export const toastConfig = {
             <View style={[styles.staticProgressBar, { backgroundColor: '#FF6B6B' }]} />
         </View>
     ),
+
     info: ({ text1, text2 }) => (
-        <View style={[styles.toastContainer, styles.successBorder]}>
+        <View style={[styles.toastContainer, styles.infoBorder]}>
             <View style={styles.iconContainer}>
                 <Feather name="info" size={24} color="#32CD80" />
             </View>
@@ -40,6 +42,23 @@ export const toastConfig = {
             <View style={[styles.staticProgressBar, { backgroundColor: '#32CD80' }]} />
         </View>
     ),
+
+    confirm: ({ text1, text2, props }) => (
+        <TouchableOpacity
+            style={[styles.toastContainer, styles.confirmBorder]}
+            activeOpacity={0.8}
+            onPress={props.onConfirm}
+        >
+            <View style={styles.iconContainer}>
+                <Feather name="help-circle" size={24} color="#89cff0" />
+            </View>
+            <View style={styles.textContainer}>
+                <Text style={styles.text1}>{text1}</Text>
+                {text2 ? <Text style={styles.text2}>{text2}</Text> : null}
+            </View>
+            <View style={[styles.staticProgressBar, { backgroundColor: '#89cff0' }]} />
+        </TouchableOpacity>
+    )
 };
 
 const styles = StyleSheet.create({
@@ -57,30 +76,34 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     iconContainer: {
         marginRight: 12,
-        marginTop: 3,
+        marginTop: 3
     },
     textContainer: {
-        flex: 1,
+        flex: 1
     },
     text1: {
         color: '#FFFFFF',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: 'bold'
     },
     text2: {
         color: '#AAAAAA',
         fontSize: 14,
-        marginTop: 2,
+        marginTop: 2
     },
     staticProgressBar: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         height: 4,
-        width: '120%',
+        width: '120%'
     },
+   // successBorder: { borderLeftWidth: 4, borderLeftColor: '#32CD80' },
+    //errorBorder: { borderLeftWidth: 4, borderLeftColor: '#FF6B6B' },
+    //infoBorder: { borderLeftWidth: 4, borderLeftColor: '#32CD80' },
+    //confirmBorder: { borderLeftWidth: 4, borderLeftColor: '#FFD700' }
 });

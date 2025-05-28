@@ -28,17 +28,91 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GenerateFormView from "./GenerateFormView";
 import OutfitSwiper from "./OuftitSwiper";
 import ModeSelectorModal from "../reusable/ModeSelectorModal";
+import OutfitPreview from "../reusable/OutfitPreview";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
 const TodaysFitScreen = () => {
     const { userId } = useContext(UserContext);
+    const navigation = useNavigation();
+
+    const [todayOutfit, setTodayOutfit] = useState(null);
+    const [loadingToday, setLoadingToday] = useState(true);
+    const today = new Date().toISOString().split('T')[0];
+
+    // Fetch today's logged outfit
+    useEffect(() => {
+        const fetchToday = async () => {
+
+            try {
+                const res = await apiClient.get(API_URLS.GET_TODAY_OUTFIT(userId, today));
+                console.log(res)
+                console.log(res.data)
+                if (res.status === 200 && res.data) {
+                    // const outfit = res.data;
+                    // // load its clothing items
+                    // const itemsRes = await apiClient.post(API_URLS.GET_CLOTHING_ITEMS_BY_IDS, outfit.items);
+                    const items = await processClothingItems(res.data);
+                    setTodayOutfit({ clothingItems: items });
+                }
+            } catch (error) {
+                console.error("Error fetching today's outfit", error);
+            } finally {
+                setLoadingToday(false);
+            }
+        };
+        fetchToday();
+    }, [userId]);
+
+    // Remove today's outfit and reset flow
+    const chooseAnother = async () => {
+        try {
+            await apiClient.delete(API_URLS.DELETE_LOGGED_OUTFIT(userId,today));
+            setTodayOutfit(null);
+            Toast.show({ type: 'success', text1: 'You can choose a new outfit.' });
+        } catch (error) {
+            console.error('Error deleting today outfit log', error);
+            Toast.show({ type: 'error', text1: 'Operation failed.' });
+        }
+    };
+
+    if (loadingToday) {
+        return <Loading />;
+    }
+
+    if (todayOutfit) {
+        return (
+            <SafeAreaView style={globalStyles.container}>
+                    <Text style={styles.todayTitle}>Today's Outfit</Text>
+                    <View style={styles.previewContainer}>
+                        <OutfitPreview clothingItems={todayOutfit.clothingItems} size="large" enableTooltip />
+                    </View>
+                    <TouchableOpacity style={styles.chooseButton} onPress={chooseAnother}>
+                        <Text style={styles.chooseText}>Choose another outfit</Text>
+                    </TouchableOpacity>
+            </SafeAreaView>
+        );
+    }
+
+    // Normal flow: shuffle or generate
+    return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <ShuffleOrGenerateFlow
+                userId={userId}
+                navigation={navigation}
+            />
+        </GestureHandlerRootView>
+    );
+};
+
+
+// Extracted component for the existing shuffle/generate logic
+const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
     const [outfits, setOutfits] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [prevOutfit, setPrevOutfit] = useState(null);
     const [loading, setLoading] = useState(true);
-    const navigation = useNavigation();
     const [fitMode, setFitMode] = useState("shuffle");             // ce se vede în header
     const [internalFitMode, setInternalFitMode] = useState("shuffle"); // ce se afișează efectiv
     const [modeModalVisible, setModeModalVisible] = useState(false);
@@ -56,14 +130,33 @@ const TodaysFitScreen = () => {
 
 
     const [currentGeneratedIndex, setCurrentGeneratedIndex] = useState(0);
-
     const modeOptions = [
         { id: 'shuffle', label: 'Shuffle through your fits', icon: 'shuffle-outline' },
         { id: 'generate', label: 'Generate Fit', icon: 'sparkles-outline' },
     ];
 
+    // fetch user outfits
+    useEffect(() => {
+        const fetchOutfits = async () => {
+            setLoading(true);
+            try {
+                const res = await apiClient.get(`${API_URLS.GET_OUTFITS_BY_USER}/${userId}`);
+                if (res.status === 200) {
+                    const processed = await Promise.all(
+                        res.data.map(async o => ({ ...o, clothingItems: await processClothingItems(o.clothingItems) }))
+                    );
+                    setOutfits(processed.sort(() => Math.random() - 0.5));
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchOutfits();
+    }, [userId]);
 
-
+    // log shuffle swipe
     useEffect(() => {
         async function fetchOutfits() {
             try {
@@ -87,9 +180,32 @@ const TodaysFitScreen = () => {
         fetchOutfits();
     }, [userId]);
 
-    const handleGeneratedSwipe = (direction) => {
+    const handleGeneratedSwipe = async (direction) => {
         if (direction === 'right' || direction === 'left') {
-            setCurrentGeneratedIndex((prev) => {
+            const outfitDto = generatedOutfit[currentGeneratedIndex];
+            // On right swipe, first save the generated outfit to database
+            if (direction === 'right') {
+                const itemIds = outfitDto.clothingItems.map(item => item.id);
+                const newOutfit = {
+                    name: `Generated Outfit ${new Date().toISOString().split('T')[0]}`,
+                    creatorId: userId,
+                    items: itemIds,
+                };
+                try {
+                    const createRes = await apiClient.post(API_URLS.CREATE_OUTFIT, newOutfit);
+                    const savedOutfitId = createRes.data.id;
+// then log it for today using the newly created id
+                    const today = new Date().toISOString().split('T')[0];
+                    await apiClient.post(API_URLS.LOG_OUTFIT, { outfitId: savedOutfitId, date: today, userId });
+                    navigation.navigate('CalendarScreen');
+                    Toast.show({ type: 'success', text1: 'Generated outfit saved and logged!' });
+                } catch (error) {
+                    console.error('Error saving/generated logging outfit', error);
+                    Toast.show({ type: 'error', text1: 'Failed to save generated outfit.' });
+                }
+            }
+            // Advance to next generated outfit
+            setCurrentGeneratedIndex(prev => {
                 const nextIndex = prev + 1;
                 if (nextIndex >= generatedOutfit.length) {
                     Toast.show({ type: 'info', text1: 'No more generated outfits.' });
@@ -367,6 +483,15 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 14,
         fontWeight: "600",
+    },
+    todayTitle: { fontSize:24, fontWeight:'700', color:'#FFF', marginBottom:16 },
+    chooseButton: { backgroundColor:'#FF6B6B', paddingVertical:12, paddingHorizontal:20, borderRadius:8, marginTop:24 },
+    chooseText: { color:'#FFF', fontSize:16, fontWeight:'600' },
+    previewContainer: {
+        marginTop: 20,
+        alignItems: 'center',
+        width: '80%',
+        height: '60%',
     },
 
 });

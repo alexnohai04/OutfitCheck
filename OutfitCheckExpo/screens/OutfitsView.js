@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
         margin: 5,
         alignItems: "flex-start",
         justifyContent: "center",
+        minHeight: 290
     },
     outfitPreviewWrapper: {
         width: "100%",
