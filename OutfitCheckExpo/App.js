@@ -26,6 +26,7 @@ import LoadingScreen from "./reusable/LoadingScreen";
 import WardrobeScreen from "./screens/WardrobeScreen";
 import AddCareInstructionsScreen from "./screens/AddCareInstructionsScreen";
 import ClothingItemDetailsScreen from "./screens/ClothingItemDetailsScreen";
+import StatsScreen from "./screens/StatsScreen";
 
 const Stack = createStackNavigator();
 
@@ -62,6 +63,7 @@ const AppNavigator = () => {
                 <Stack.Screen name="WardrobeScreen" component={WardrobeScreen} />
                 <Stack.Screen name="AddCareInstructionsScreen" component={AddCareInstructionsScreen} />
                 <Stack.Screen name="ClothingItemDetailsScreen" component={ClothingItemDetailsScreen} />
+                <Stack.Screen name="StatsScreen" component={StatsScreen} />
                 </Stack.Navigator>
             <Toast config={toastConfig} position="top" />
         </NavigationContainer>

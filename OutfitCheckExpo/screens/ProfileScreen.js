@@ -223,10 +223,11 @@ const ProfileScreen = () => {
                     <Text style={styles.actionText}>Edit</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.navigate("ClothingItems")} style={styles.actionButton}>
-                    <Ionicons name="shirt" size={18} color="#FFF" />
-                    <Text style={styles.actionText}>My Clothes</Text>
+                <TouchableOpacity onPress={() => navigation.navigate("StatsScreen")} style={styles.actionButton}>
+                    <Ionicons name="stats-chart" size={18} color="#FFF" />
+                    <Text style={styles.actionText}>Statistics</Text>
                 </TouchableOpacity>
+
 
                 <TouchableOpacity onPress={handleLogout} style={styles.actionButton}>
                     <Feather name="log-out" size={18} color="#FF6B6B" />

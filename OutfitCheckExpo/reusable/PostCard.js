@@ -100,7 +100,7 @@ const PostCard = ({ post, profilePic, postImage, clothingItems, onDelete, onOpti
                     <Text style={styles.date}>{dayjs(post.postedAt).fromNow()}</Text>
                 </View>
 
-                {userId === post.userId && (
+                {userId === post.userId && onOptionsPress && (
                     <TouchableOpacity onPress={onOptionsPress}>
                         <Icon name="ellipsis-vertical" size={20} color="#fff" />
                     </TouchableOpacity>

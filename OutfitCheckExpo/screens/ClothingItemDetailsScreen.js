@@ -20,11 +20,14 @@ import OutfitPreview from "../reusable/OutfitPreview";
 import { processClothingItems } from "../utils/imageUtils";
 import { fetchBrandLogo } from "../utils/logoService";
 import {Ionicons} from "@expo/vector-icons";
+import { formatLastUsedDate, getDonationSuggestion } from '../utils/dateUtils';
+
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOTTOM_SHEET_HEIGHT = SCREEN_HEIGHT * 0.6;
 const CLOSED_OFFSET = SCREEN_HEIGHT * 0.4;
 const DRAG_THRESHOLD = 50;
+
 
 const ClothingItemDetailsScreen = ({ route, navigation }) => {
     const { item } = route.params;
@@ -33,6 +36,8 @@ const ClothingItemDetailsScreen = ({ route, navigation }) => {
     const [outfits, setOutfits] = useState([]);
     // Local copy if you want to update after delete or wash
     const [clothingItem, setClothingItem] = useState(item);
+    const [lastUsed, setLastUsed] = useState(null);
+
 
     // Fetch brand logo
     useEffect(() => {
@@ -121,6 +126,9 @@ const ClothingItemDetailsScreen = ({ route, navigation }) => {
                     res.data.map(async o => ({ ...o, clothingItems: await processClothingItems(o.clothingItems) }))
                 );
                 setOutfits(processed.sort((a,b) => b.id - a.id));
+
+                const lastUsedRes = await apiClient.get(API_URLS.GET_LAST_USED_DATE(item.id));
+                setLastUsed(lastUsedRes.data.lastUsed);
             } catch (e) { console.error(e); }
         })();
     }, []);
@@ -196,12 +204,31 @@ const ClothingItemDetailsScreen = ({ route, navigation }) => {
                             ))}
                         </View>
                     )}
+
                     <View style={styles.instructionsSection}>
                         <Text style={styles.sectionTitle}>Used in the following outfits</Text>
                         {outfits.length===0 ? (
                             <Text style={styles.detailValue}>This item is not used in any outfits yet.</Text>
                         ) : renderOutfits()}
                     </View>
+
+
+                    <View style={styles.detailCell}>
+                        <Text style={styles.sectionTitle}>Last time used</Text>
+                        <Text style={styles.detailValue}>
+                            {lastUsed ? formatLastUsedDate(lastUsed) : 'Never'}
+                        </Text>
+                    </View>
+                    { getDonationSuggestion(lastUsed) && (
+                        <View style={{ width: '100%', marginTop: 12 }}>
+                            <View style={styles.donationSuggestionContainer}>
+                                <Text style={styles.donationSuggestionText}>
+                                    {getDonationSuggestion(lastUsed)}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
                     <View style={styles.modalButtonsContainer}>
                         {clothingItem.inLaundry ? (
                             <View style={styles.statusContainer}>
@@ -281,7 +308,7 @@ const styles = StyleSheet.create({
     careInstructionItem: { flexDirection:'row', alignItems:'center', marginBottom:8 },
     careIcon: { width:28, height:28, marginRight:8 },
     careText: { fontSize:14, color:'#CCC', flexShrink:1 },
-    horizontalItem: { marginRight:12, width:SCREEN_WIDTH/3.5, maxHeight:250 },
+    horizontalItem: { marginVertical:12, marginHorizontal:4, width:SCREEN_WIDTH/3.5, maxHeight:250 },
     modalButtonsContainer: {
         flexDirection: 'column',
         justifyContent: 'space-around',
@@ -310,6 +337,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
+    donationSuggestionContainer: {
+        width:'100%',
+        backgroundColor: '#2A1C1C', // un bej-cafeniu subtil pe fundal închis
+        borderLeftWidth: 4,
+        borderLeftColor: '#FF6B6B', // galben auriu
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        marginTop: 10,
+        marginBottom: 4
+    },
+    donationSuggestionText: {
+        color: '#FF6B6B',
+        fontSize: 13,
+        //fontStyle: 'italic',
+        fontWeight: '500'
+    }
 
 
 });

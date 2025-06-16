@@ -24,7 +24,7 @@ const globalStyles = StyleSheet.create({
         color: "#FFFFFF",
     },
     button: {
-        backgroundColor: "#D9534F",
+        backgroundColor: "#FF6B6B",
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,

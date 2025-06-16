@@ -1,7 +1,9 @@
 package org.example.outfitcheck.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.outfitcheck.dto.ClothingItemUsageDTO;
 import org.example.outfitcheck.dto.LoggedOutfitDTO;
+import org.example.outfitcheck.dto.OutfitUsageDTO;
 import org.example.outfitcheck.entity.ClothingItem;
 import org.example.outfitcheck.entity.LoggedOutfit;
 import org.example.outfitcheck.entity.Outfit;
@@ -48,5 +50,23 @@ public class LoggedOutfitController {
         loggedOutfitService.deleteByUserAndDate(userId, date);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/most-worn-outfits/{userId}")
+    public ResponseEntity<List<OutfitUsageDTO>> getMostWornOutfits(@PathVariable Long userId) {
+        return ResponseEntity.ok(loggedOutfitService.getTopWornOutfits(userId));
+    }
+
+
+    @GetMapping("/most-used-items/{userId}")
+    public ResponseEntity<List<ClothingItemUsageDTO>> getMostUsedClothingItems(@PathVariable Long userId) {
+        return ResponseEntity.ok(loggedOutfitService.getMostUsedClothingItems(userId));
+    }
+
+    @GetMapping("/neglected-items/{userId}")
+    public ResponseEntity<List<ClothingItem>> getNeglectedItems(@PathVariable Long userId) {
+        return ResponseEntity.ok(loggedOutfitService.getNeglectedItems(userId));
+    }
+
+
 
 }

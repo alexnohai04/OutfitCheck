@@ -10,6 +10,5 @@ import java.util.List;
 public interface OutfitRepository extends JpaRepository<Outfit, Long> {
     List<Outfit> findByCreatorId(Long userId);
     List<Outfit> findByCreatorIdAndVisibleTrue(Long userId);
-
     List<Outfit> findAllByClothingItemsContaining(ClothingItem item);
 }

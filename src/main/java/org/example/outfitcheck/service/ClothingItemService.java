@@ -4,18 +4,15 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.example.outfitcheck.dto.ColorInfo;
 import org.example.outfitcheck.dto.VisionAnalysisResponse;
-import org.example.outfitcheck.entity.ClothingCategory;
-import org.example.outfitcheck.entity.ClothingItem;
-import org.example.outfitcheck.entity.User;
-import org.example.outfitcheck.repository.ClothingCategoryRepository;
-import org.example.outfitcheck.repository.ClothingItemRepository;
-import org.example.outfitcheck.repository.UserRepository;
+import org.example.outfitcheck.entity.*;
+import org.example.outfitcheck.repository.*;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -24,16 +21,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
 public class ClothingItemService {
     private final ClothingItemRepository clothingItemRepository;
     private final ClothingCategoryRepository categoryRepository;
+
+    private final OutfitRepository outfitRepository;
+
+    private final LoggedOutfitRepository loggedOutfitRepository;
     private final UserRepository userRepository;
     private final VisionService visionService;
     private final CategoryMapperService categoryMapperService;
@@ -41,10 +40,12 @@ public class ClothingItemService {
     private final AsyncClothingService asyncClothingService;
 
     public ClothingItemService(ClothingItemRepository clothingItemRepository,
-                               ClothingCategoryRepository categoryRepository,
+                               ClothingCategoryRepository categoryRepository, OutfitRepository outfitRepository, LoggedOutfitRepository loggedOutfitRepository,
                                UserRepository userRepository, VisionService visionService, CategoryMapperService categoryMapperService, ColorMapperService colorMapperService, AsyncClothingService asyncClothingService) {
         this.clothingItemRepository = clothingItemRepository;
         this.categoryRepository = categoryRepository;
+        this.outfitRepository = outfitRepository;
+        this.loggedOutfitRepository = loggedOutfitRepository;
         this.userRepository = userRepository;
         this.visionService = visionService;
         this.categoryMapperService = categoryMapperService;
@@ -266,4 +267,20 @@ public class ClothingItemService {
         // save() e opțional aici, dar îl folosim ca să fim siguri că persistă
         return clothingItemRepository.save(item);
     }
+
+    public LocalDate getLastUsedDate(Long clothingItemId) {
+        ClothingItem item = clothingItemRepository.findById(clothingItemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clothing item not found"));
+
+        List<Outfit> outfits = outfitRepository.findAllByClothingItemsContaining(item);
+        List<LoggedOutfit> logged = loggedOutfitRepository.findByOutfitIn(outfits);
+        return logged.stream()
+                .map(LoggedOutfit::getDate)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
+
+
+
 }

@@ -64,6 +64,14 @@ const API_URLS = {
 
     GENERATE_OUTFIT: `${API_BASE}/api/recommendations/generate`,
 
+    GET_LAST_USED_DATE: (clothingItemId) => `${API_BASE}/api/clothing/${clothingItemId}/last-used`,
+
+    GET_MOST_WORN_OUTFITS: (userId) => `/api/logged-outfits/most-worn-outfits/${userId}`,
+    GET_MOST_USED_ITEMS: (userId) => `/api/logged-outfits/most-used-items/${userId}`,
+
+    GET_NEGLECTED_ITEMS: (userId) => `/api/logged-outfits/neglected-items/${userId}`,
+
+
 };
 
 export default API_URLS;

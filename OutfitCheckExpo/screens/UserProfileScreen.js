@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#1E1E1E",
         paddingTop: 40,
         paddingHorizontal: 20,
+        justifyContent: "center"
     },
     profileImageContainer: {
         width: 120,

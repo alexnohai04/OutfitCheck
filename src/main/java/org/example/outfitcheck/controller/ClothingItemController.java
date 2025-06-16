@@ -2,6 +2,7 @@ package org.example.outfitcheck.controller;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.example.outfitcheck.dto.ClothingItemRequest;
+import org.example.outfitcheck.dto.LastUsedResponse;
 import org.example.outfitcheck.dto.VisionAnalysisResponse;
 import org.example.outfitcheck.entity.ClothingItem;
 import org.example.outfitcheck.service.ClothingItemService;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -100,4 +102,12 @@ public class ClothingItemController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/{id}/last-used")
+    public ResponseEntity<LastUsedResponse> getLastUsedDate(@PathVariable("id") Long clothingItemId) {
+        LocalDate lastUsed = clothingItemService.getLastUsedDate(clothingItemId);
+        return ResponseEntity.ok(new LastUsedResponse(lastUsed));
+    }
+
+
 }

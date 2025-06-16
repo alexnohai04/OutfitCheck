@@ -7,7 +7,7 @@ import {
     FlatList,
     Image,
     ScrollView,
-    TouchableOpacity, Pressable
+    TouchableOpacity
 } from "react-native";
 import Toast from 'react-native-toast-message';
 import apiClient from "../apiClient";
@@ -15,7 +15,7 @@ import API_URLS from "../apiConfig";
 import { UserContext } from "../UserContext";
 import { SYMBOL_ICONS } from "../constants/symbolIcons";
 import { processClothingItems } from "../utils/imageUtils";
-import {Ionicons} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 const LaundryView = () => {
     const { userId } = useContext(UserContext);
@@ -75,7 +75,6 @@ const LaundryView = () => {
 
     const groupedItems = groupByMachine();
 
-    // Show confirm toast on long press
     const addToLaundry = (itemId) => {
         Toast.show({
             type: 'confirm',
@@ -127,7 +126,7 @@ const LaundryView = () => {
                         : it
                 )
             );
-            Toast.show({ type: 'success', text1: `${toToggle.length} items washed succesfully` });
+            Toast.show({ type: 'success', text1: `${toToggle.length} items washed successfully` });
         } catch (error) {
             console.error("Error washing category", error);
             Toast.show({ type: 'error', text1: 'Failed to wash category' });
@@ -172,29 +171,24 @@ const LaundryView = () => {
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={styles.itemsRow}
                                 renderItem={({ item }) => (
-                                    <Pressable
+                                    <TouchableOpacity
                                         onLongPress={() => !item.inLaundry && addToLaundry(item.id)}
-                                        style={({ pressed }) => [
-                                            styles.itemContainer,
-                                            item.inLaundry && styles.inactiveItem,
-                                            pressed && styles.pressedItem
-                                        ]}
-                                    >
-                                        <View style={[
+                                        style={[
                                             styles.itemContainer,
                                             !item.inLaundry && styles.inactiveItem
-                                        ]}>
-                                            {item.base64Image ? (
-                                                <Image source={{ uri: item.base64Image }} style={styles.itemImage} />
-                                            ) : (
-                                                <View style={styles.placeholder}>
-                                                    <Text style={styles.placeholderText}>No Image</Text>
-                                                </View>
-                                            )}
-                                            <Text style={styles.itemName}>{item.category.name}</Text>
-                                            <Text style={styles.itemColor}>{item.baseColor}</Text>
-                                        </View>
-                                    </Pressable>
+                                        ]}
+                                        activeOpacity={0.7}
+                                    >
+                                        {item.base64Image ? (
+                                            <Image source={{ uri: item.base64Image }} style={styles.itemImage} />
+                                        ) : (
+                                            <View style={styles.placeholder}>
+                                                <Text style={styles.placeholderText}>No Image</Text>
+                                            </View>
+                                        )}
+                                        <Text style={styles.itemName}>{item.category.name}</Text>
+                                        <Text style={styles.itemColor}>{item.baseColor}</Text>
+                                    </TouchableOpacity>
                                 )}
                             />
                         </View>
@@ -223,7 +217,6 @@ const styles = StyleSheet.create({
     itemColor: { color:'#CCC', fontSize:12 },
     headerButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4 },
     headerButtonText: { color: '#89cff0', fontSize: 14, marginLeft: 4 },
-    pressedItem: { backgroundColor:'#383838' },
 });
 
 export default LaundryView;

@@ -17,13 +17,9 @@ import API_URLS from "../apiConfig";
 import { processClothingItems } from "../utils/imageUtils";
 import globalStyles from "../styles/globalStyles";
 import Toast from "react-native-toast-message";
-import { useNavigation } from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {FontAwesome, Ionicons} from '@expo/vector-icons';
-import Animated, {
-    useAnimatedStyle,
-    interpolate,
-    Extrapolate,
-} from "react-native-reanimated";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GenerateFormView from "./GenerateFormView";
 import OutfitSwiper from "./OuftitSwiper";
@@ -39,31 +35,39 @@ const TodaysFitScreen = () => {
 
     const [todayOutfit, setTodayOutfit] = useState(null);
     const [loadingToday, setLoadingToday] = useState(true);
-    const today = new Date().toISOString().split('T')[0];
+    const ROMANIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+    const today = new Date(Date.now() + ROMANIA_OFFSET_MS)
+        .toISOString()
+        .split('T')[0];
 
-    // Fetch today's logged outfit
-    useEffect(() => {
-        const fetchToday = async () => {
+    useFocusEffect(
+        React.useCallback(() => {
+            let isActive = true;
+            setLoadingToday(true);
 
-            try {
-                const res = await apiClient.get(API_URLS.GET_TODAY_OUTFIT(userId, today));
-                console.log(res)
-                console.log(res.data)
-                if (res.status === 200 && res.data) {
-                    // const outfit = res.data;
-                    // // load its clothing items
-                    // const itemsRes = await apiClient.post(API_URLS.GET_CLOTHING_ITEMS_BY_IDS, outfit.items);
-                    const items = await processClothingItems(res.data);
-                    setTodayOutfit({ clothingItems: items });
+            const fetchToday = async () => {
+                try {
+                    const res = await apiClient.get(API_URLS.GET_TODAY_OUTFIT(userId, today));
+                    if (isActive && res.status === 200 && res.data) {
+                        const items = await processClothingItems(res.data);
+                        setTodayOutfit({ clothingItems: items });
+                    }
+                } catch (error) {
+                    if (isActive) {
+                        console.warn("Error fetching today's outfit", error);
+                        // Toast.show({ type: 'error', text1: 'No outfit logged today.' });
+                     }
+                } finally {
+                    if (isActive) setLoadingToday(false);
                 }
-            } catch (error) {
-                console.error("Error fetching today's outfit", error);
-            } finally {
-                setLoadingToday(false);
-            }
-        };
-        fetchToday();
-    }, [userId]);
+            };
+
+            fetchToday();
+            return () => {
+                isActive = false;  // cleanup
+            };
+        }, [userId, today])
+    );
 
     // Remove today's outfit and reset flow
     const chooseAnother = async () => {
@@ -89,6 +93,7 @@ const TodaysFitScreen = () => {
                         <OutfitPreview clothingItems={todayOutfit.clothingItems} size="large" enableTooltip />
                     </View>
                     <TouchableOpacity style={styles.chooseButton} onPress={chooseAnother}>
+                        <Ionicons name="refresh-outline" size={24} color="#FF6B6B" />
                         <Text style={styles.chooseText}>Choose another outfit</Text>
                     </TouchableOpacity>
             </SafeAreaView>
@@ -219,7 +224,10 @@ const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
     const logSwipe = async (direction) => {
         const outfit = outfits[currentIndex];
         if (direction === 'right') {
-            const today = new Date().toISOString().split('T')[0];
+            const ROMANIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+            const today = new Date(Date.now() + ROMANIA_OFFSET_MS)
+                .toISOString()
+                .split('T')[0];
             try {
                 await apiClient.post(API_URLS.LOG_OUTFIT, { outfitId: outfit.id, date: today, userId });
                 Toast.show({ type: 'success', text1: 'Outfit logged!' });
@@ -348,7 +356,6 @@ const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
     };
 
 
-
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <View style={styles.headerContainer}>
@@ -367,14 +374,9 @@ const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
                 {fitMode === "shuffle" ? (
                     <OutfitSwiper
                         userId={userId}
-                        fetchOutfits={async () => {
-                            const response = await apiClient.get(`${API_URLS.GET_OUTFITS_BY_USER}/${userId}`);
-                            return Promise.all(response.data.map(async outfit => ({
-                                ...outfit,
-                                clothingItems: await processClothingItems(outfit.clothingItems),
-                            })));
-                        }}
-                        onSwipe={logSwipe}
+                        outfits={outfits}        // lista pe care ai încărcat-o deja
+                        currentIndex={currentIndex}
+                        onSwipe={logSwipe}       // aici poţi lăsa semnătura curentă
                     />
 
                 ) : generatedOutfit ? (
@@ -485,13 +487,13 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     todayTitle: { fontSize:24, fontWeight:'700', color:'#FFF', marginBottom:16 },
-    chooseButton: { backgroundColor:'#FF6B6B', paddingVertical:12, paddingHorizontal:20, borderRadius:8, marginTop:24 },
-    chooseText: { color:'#FFF', fontSize:16, fontWeight:'600' },
+    chooseButton: { flexDirection:'row', alignItems:'center', paddingVertical:12, paddingHorizontal:20, borderRadius:8, marginTop:24 },
+    chooseText: { color:'#FF6B6B', fontSize:16, fontWeight:'600' },
     previewContainer: {
-        marginTop: 20,
+        marginTop: 0,
         alignItems: 'center',
         width: '80%',
-        height: '60%',
+        height: '65%',
     },
 
 });
