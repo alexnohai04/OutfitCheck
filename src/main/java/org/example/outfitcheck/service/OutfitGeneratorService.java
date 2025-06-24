@@ -105,11 +105,23 @@ public class OutfitGeneratorService {
 
         // Score and pick top
         generated.forEach(dto -> dto.setScore(calcScore(dto, context, season)));
-        return generated.stream()
+
+        List<OutfitSuggestionDTO> sorted = generated.stream()
                 .sorted(Comparator.comparingDouble(OutfitSuggestionDTO::getScore).reversed())
-                .distinct()
-                .limit(5)
                 .collect(Collectors.toList());
+
+        List<OutfitSuggestionDTO> diversified = new ArrayList<>();
+        for (OutfitSuggestionDTO candidate : sorted) {
+            boolean similarExists = diversified.stream()
+                    .anyMatch(existing -> isTooSimilar(existing, candidate));
+            if (!similarExists) {
+                diversified.add(candidate);
+            }
+            if (diversified.size() == 5) break;
+        }
+
+        return diversified;
+
     }
 
 //    private List<ClothingItem> filterBySeason(List<ClothingItem> items, String category, String season) {
@@ -224,6 +236,18 @@ public class OutfitGeneratorService {
         }
         return combos;
     }
+    private boolean isTooSimilar(OutfitSuggestionDTO a, OutfitSuggestionDTO b) {
+        int diffCount = 0;
+        if (!Objects.equals(a.getTop1Id(), b.getTop1Id())) diffCount++;
+        if (!Objects.equals(a.getTop2Id(), b.getTop2Id())) diffCount++;
+        if (!Objects.equals(a.getBottomId(), b.getBottomId())) diffCount++;
+        if (!Objects.equals(a.getFootwearId(), b.getFootwearId())) diffCount++;
+        if (!Objects.equals(a.getOuterwearId(), b.getOuterwearId())) diffCount++;
+        if (!Objects.equals(a.getHeadwearId(), b.getHeadwearId())) diffCount++;
+        if (!Objects.equals(a.getFullBodywearId(), b.getFullBodywearId())) diffCount++;
+        return diffCount <= 1; // consideră că sunt prea similare dacă diferă prin cel mult 1 articol
+    }
+
 
     private OutfitSuggestionDTO buildDTO(
             ClothingItem t1, ClothingItem t2, ClothingItem b,

@@ -258,6 +258,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#1E1E1E",
         paddingTop: 40,
         paddingHorizontal: 20,
+        paddingBottom:25
     },
     calendarWrapper: {
         position: "absolute",
@@ -380,6 +381,7 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
+
     },
 });
 

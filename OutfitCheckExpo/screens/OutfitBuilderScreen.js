@@ -193,6 +193,7 @@ const OutfitBuilderScreen = () => {
             name: outfitName.trim(),
             creatorId: userId,
             items: selectedItems.map((i) => i.id),
+            categoryIds: []
         };
 
         try {

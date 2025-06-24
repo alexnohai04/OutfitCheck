@@ -11,10 +11,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import OutfitPreview from "../reusable/OutfitPreview";
-const OutfitsView = ({ outfits, navigation, selectedCategory, onSelectCategory }) => {
+import Toast from "react-native-toast-message";
+const OutfitsView = ({ outfits, navigation, selectedCategory, onSelectCategory, categories, onRequestAddCategory , onDeleteCategoryByName }) => {
     const filteredOutfits = selectedCategory === "All"
         ? outfits
-        : outfits.filter(item => item.category?.name === selectedCategory);
+        : outfits.filter(item =>
+            Array.isArray(item.categories) &&
+            item.categories.some(cat => cat.name === selectedCategory)
+        );
+
+
 
     const dataWithAddButton = [{ isAddButton: true }, ...filteredOutfits];
 
@@ -40,6 +46,7 @@ const OutfitsView = ({ outfits, navigation, selectedCategory, onSelectCategory }
                 style={styles.gridItem}
                 onPress={() => navigation.navigate("OutfitDetails", { outfitId: item.id })}
             >
+
                 <OutfitPreview clothingItems={item.clothingItems} compact />
             </TouchableOpacity>
         );
@@ -53,15 +60,44 @@ const OutfitsView = ({ outfits, navigation, selectedCategory, onSelectCategory }
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.categoryScroll}
                 >
-                    <TouchableOpacity
-                        style={[
-                            styles.categoryButton,
-                            selectedCategory === "All" && styles.categoryButtonSelected
-                        ]}
-                        onPress={() => onSelectCategory("All")}
-                    >
-                        <Text style={styles.categoryText}>All</Text>
-                    </TouchableOpacity>
+                    {["All", ...categories.map(cat => cat.name), "+ Add"].map((name) => (
+                        <TouchableOpacity
+                            key={name}
+                            style={[
+                                styles.categoryButton,
+                                selectedCategory === name && name !== "+ Add" && styles.categoryButtonSelected,
+                                name === "+ Add" && styles.categoryAddButton ]}
+                            onPress={() => {
+                                if (name === "+ Add") {
+                                    onRequestAddCategory?.();
+                                } else {
+                                    onSelectCategory(name);
+                                }
+                            }}
+                            onLongPress={() => {
+                                if (name !== "All" && name !== "+ Add") {
+                                    Toast.show({
+                                        type: 'confirm',
+                                        position: 'top',
+                                        text1: `Remove "${name}" category?`,
+                                        text2: 'Tap to confirm',
+                                        autoHide: false,
+                                        props: {
+                                            onConfirm: () => onDeleteCategoryByName(name),
+                                            onCancel: () => Toast.hide()
+                                        }
+                                    });
+                                }
+                            }}
+                        >
+
+                             <Text style={styles.categoryText}>
+                                {name === "+ Add" ? "+" : name}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+
+
                 </ScrollView>
             </View>
             <FlatList
@@ -132,6 +168,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
+    categoryAddButton: {
+        borderStyle: "dashed",
+        borderWidth: 2,
+        borderColor: "#3A3A3A",
+        //borderRadius: 16,
+        backgroundColor: "#1c1c1c",
+    }
+
 });
 
 export default OutfitsView;

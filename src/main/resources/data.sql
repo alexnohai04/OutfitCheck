@@ -57,3 +57,4 @@ WHERE clothing_item_id IN (
     FROM clothing_items
     WHERE image_url LIKE 'file://%'
 );
+

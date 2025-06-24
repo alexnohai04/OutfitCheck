@@ -7,7 +7,7 @@ import {
     SafeAreaView,
     Modal,
     TouchableWithoutFeedback,
-    StyleSheet,
+    StyleSheet, Alert,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -84,6 +84,8 @@ const WardrobeScreen = () => {
     const [transitionVisible, setTransitionVisible] = useState(false);
     const [pendingMode, setPendingMode] = useState(null);
     const [triggerFadeOut, setTriggerFadeOut] = useState(false);
+    const [categories, setCategories] = useState([]);
+
 
     // Refresh on focus
     useFocusEffect(
@@ -145,6 +147,64 @@ const WardrobeScreen = () => {
             fetchData();
         }
     }, [transitionVisible, pendingMode]);
+
+    useEffect(() => {
+        const fetchOutfitCategories = async () => {
+            try {
+                const response = await apiClient.get(API_URLS.GET_OUTFIT_CATEGORIES);
+                setCategories(response.data);
+            } catch (error) {
+                console.error("Failed to fetch outfit categories", error);
+            }
+        };
+
+        fetchOutfitCategories();
+    }, []);
+
+    const handleAddCategory = () => {
+        Alert.prompt(
+            "New Category",
+            "Enter a name for the new outfit category:",
+            async (text) => {
+                if (text?.trim()) {
+                    try {
+                        const response = await apiClient.post(API_URLS.ADD_OUTFIT_CATEGORY, {
+                            name: text.trim()
+                        });
+                        setCategories(prev => [...prev, response.data]);
+                        Toast.show({ type: "success", text1: "Category added" });
+                    } catch (error) {
+                        console.error("Failed to add category", error);
+                        Toast.show({ type: "error", text1: "Category already exists or failed" });
+                    }
+                }
+            }
+        );
+    };
+
+
+    const onDeleteCategoryByName = async (name) => {
+        try {
+            const res = await apiClient.get(`${API_URLS.GET_OUTFIT_CATEGORIES}/name/${name}`);
+            if (res.data?.id) {
+                await apiClient.delete(`${API_URLS.DELETE_OUTFIT_CATEGORY}/${res.data.id}`);
+                Toast.hide();
+                Toast.show({
+                    type: 'success',
+                    text1: `Deleted category "${name}"`
+                });
+                setCategories(prev => prev.filter(cat => cat.id !== res.data.id));
+               // actualizează categoriile
+            }
+        } catch (err) {
+            console.error("Error deleting category:", err);
+            Toast.show({
+                type: 'error',
+                text1: 'Delete failed'
+            });
+        }
+    };
+
 
     const clothingCategories = ["All", ...new Set(clothingItems.map(item => item.category.name))];
 
@@ -230,7 +290,16 @@ const WardrobeScreen = () => {
             </Modal>
 
             {internalMode === "outfits" ? (
-                <OutfitsView outfits={outfits} navigation={navigation} />
+                <OutfitsView
+                    outfits={outfits}
+                    navigation={navigation}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={setSelectedCategory}
+                    categories={categories}
+                    onRequestAddCategory={handleAddCategory}
+                    onDeleteCategoryByName={onDeleteCategoryByName}
+                />
+
             ) : internalMode === "laundry" ? (
                 <LaundryView />
             ) : (

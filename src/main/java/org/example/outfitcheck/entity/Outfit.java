@@ -1,5 +1,6 @@
 package org.example.outfitcheck.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -31,5 +32,15 @@ public class Outfit {
 
     @Column(nullable = true)
     private boolean visible  = false;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "outfit_outfit_category",
+            joinColumns = @JoinColumn(name = "outfit_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    @JsonIgnoreProperties("outfits")
+    private List<OutfitCategory> categories;
+
 
 }

@@ -24,6 +24,11 @@ const API_URLS = {
     GET_CLOTHING_ITEMS_BY_IDS: `${API_BASE}/api/clothing/by-ids`,
     GET_OUTFITS_CONTAINING_CLOTHING_ITEM: (itemId) => `${API_BASE}/api/outfits/clothing-items/${itemId}/outfits`,
 
+    GET_OUTFIT_CATEGORIES: `${API_BASE}/api/outfit-categories`,
+    UPDATE_OUTFIT_CATEGORIES: (id) => `${API_BASE}/api/outfits/${id}/categories`,
+    DELETE_OUTFIT_CATEGORY: `${API_BASE}/api/outfit-categories`,
+
+    ADD_OUTFIT_CATEGORY: `${API_BASE}/api/outfit-categories`,
 
     GET_USER_PROFILE: `${API_BASE}/users/profile`,
 

@@ -12,4 +12,5 @@ public class OutfitDTO {
     private Long creatorId;
     private boolean visible;
     private List<Long> items;  // Listă cu ID-urile hainelor selectate
+    private List<Long> categoryIds;
 }

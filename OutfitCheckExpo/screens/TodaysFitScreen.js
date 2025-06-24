@@ -131,7 +131,14 @@ const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
     const [topwearLayers, setTopwearLayers] = useState(1);
     const [preferFullBodywear, setPreferFullBodywear] = useState(false);
 
-    const [generatedVersion, setGeneratedVersion] = useState(0); // 🆕
+    const [generatedVersion, setGeneratedVersion] = useState(0);
+
+    const [allCategories, setAllCategories] = useState([]);
+
+    const ROMANIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+    const today = new Date(Date.now() + ROMANIA_OFFSET_MS)
+        .toISOString()
+        .split('T')[0];
 
 
     const [currentGeneratedIndex, setCurrentGeneratedIndex] = useState(0);
@@ -139,6 +146,24 @@ const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
         { id: 'shuffle', label: 'Shuffle through your fits', icon: 'shuffle-outline' },
         { id: 'generate', label: 'Generate Fit', icon: 'sparkles-outline' },
     ];
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await apiClient.get(API_URLS.GET_OUTFIT_CATEGORIES);
+                setAllCategories(res.data);
+            } catch (e) {
+                console.error("Failed to fetch categories", e);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    const getCategoryIdsByNames = (names) => {
+        return allCategories
+            .filter(cat => names.includes(cat.name))
+            .map(cat => cat.id);
+    };
 
     // fetch user outfits
     useEffect(() => {
@@ -195,12 +220,11 @@ const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
                     name: `Generated Outfit ${new Date().toISOString().split('T')[0]}`,
                     creatorId: userId,
                     items: itemIds,
+                    categoryIds: [0, ...getCategoryIdsByNames([generationSeason, generationContext])]
                 };
                 try {
                     const createRes = await apiClient.post(API_URLS.CREATE_OUTFIT, newOutfit);
                     const savedOutfitId = createRes.data.id;
-// then log it for today using the newly created id
-                    const today = new Date().toISOString().split('T')[0];
                     await apiClient.post(API_URLS.LOG_OUTFIT, { outfitId: savedOutfitId, date: today, userId });
                     navigation.navigate('CalendarScreen');
                     Toast.show({ type: 'success', text1: 'Generated outfit saved and logged!' });
@@ -224,10 +248,7 @@ const ShuffleOrGenerateFlow = ({ userId, navigation }) => {
     const logSwipe = async (direction) => {
         const outfit = outfits[currentIndex];
         if (direction === 'right') {
-            const ROMANIA_OFFSET_MS = 3 * 60 * 60 * 1000;
-            const today = new Date(Date.now() + ROMANIA_OFFSET_MS)
-                .toISOString()
-                .split('T')[0];
+
             try {
                 await apiClient.post(API_URLS.LOG_OUTFIT, { outfitId: outfit.id, date: today, userId });
                 Toast.show({ type: 'success', text1: 'Outfit logged!' });

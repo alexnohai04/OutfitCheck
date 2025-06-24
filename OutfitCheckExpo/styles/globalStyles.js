@@ -155,7 +155,7 @@ const globalStyles = StyleSheet.create({
     },
     backButton: {
         position: "absolute",
-        top: 25,
+        top: 35,
         left: 0,
         zIndex: 10,
         padding: 20,

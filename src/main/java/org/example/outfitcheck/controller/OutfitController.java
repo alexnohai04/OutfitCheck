@@ -1,11 +1,14 @@
 package org.example.outfitcheck.controller;
 
 import org.example.outfitcheck.config.JwtUtil;
+import org.example.outfitcheck.dto.CategoryUpdateDTO;
 import org.example.outfitcheck.dto.OutfitDTO;
 import org.example.outfitcheck.entity.ClothingItem;
 import org.example.outfitcheck.entity.Outfit;
+import org.example.outfitcheck.entity.OutfitCategory;
 import org.example.outfitcheck.entity.User;
 import org.example.outfitcheck.repository.ClothingItemRepository;
+import org.example.outfitcheck.repository.OutfitCategoryRepository;
 import org.example.outfitcheck.repository.OutfitRepository;
 import org.example.outfitcheck.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -23,13 +27,16 @@ public class OutfitController {
     private final OutfitRepository outfitRepository;
     private final UserRepository userRepository;
     private final ClothingItemRepository clothingItemRepository;
+    private final OutfitCategoryRepository outfitCategoryRepository;
+
     private final JwtUtil jwtUtil;
 
 
-    public OutfitController(OutfitRepository outfitRepository, UserRepository userRepository, ClothingItemRepository clothingItemRepository, JwtUtil jwtUtil) {
+    public OutfitController(OutfitRepository outfitRepository, UserRepository userRepository, ClothingItemRepository clothingItemRepository, OutfitCategoryRepository outfitCategoryRepository, JwtUtil jwtUtil) {
         this.outfitRepository = outfitRepository;
         this.userRepository = userRepository;
         this.clothingItemRepository = clothingItemRepository;
+        this.outfitCategoryRepository = outfitCategoryRepository;
         this.jwtUtil = jwtUtil;
     }
 
@@ -43,18 +50,24 @@ public class OutfitController {
         }
 
         User creator = userOptional.get();
-
-        // Convertim lista de ID-uri în obiecte ClothingItem
         List<ClothingItem> clothingItems = clothingItemRepository.findAllById(outfitDTO.getItems());
+
+        List<OutfitCategory> categories = outfitCategoryRepository.findAllById(outfitDTO.getCategoryIds());
+        if (categories.size() != outfitDTO.getCategoryIds().size()) {
+            return ResponseEntity.badRequest().body(null);
+        }
 
         Outfit newOutfit = new Outfit();
         newOutfit.setName(outfitDTO.getName());
         newOutfit.setCreator(creator);
         newOutfit.setClothingItems(clothingItems);
+        newOutfit.setCategories(categories);
+        newOutfit.setVisible(outfitDTO.isVisible());
 
         Outfit savedOutfit = outfitRepository.save(newOutfit);
         return ResponseEntity.ok(savedOutfit);
     }
+
 
     // 🔹 2. Obținerea tuturor outfit-urilor unui utilizator
     @GetMapping("/user/{userId}")
@@ -123,5 +136,40 @@ public class OutfitController {
 
         return ResponseEntity.ok(outfits);
     }
+
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<Outfit>> getOutfitsByCategory(@PathVariable Long categoryId) {
+        Optional<OutfitCategory> categoryOpt = outfitCategoryRepository.findById(categoryId);
+        if (categoryOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<Outfit> outfits = outfitRepository.findAllByCategoriesContaining(categoryOpt.get());
+        return ResponseEntity.ok(outfits);
+    }
+
+    @PutMapping("/{id}/categories")
+    public ResponseEntity<?> updateOutfitCategories(
+            @PathVariable Long id,
+            @RequestBody CategoryUpdateDTO dto
+    ) {
+        Optional<Outfit> optionalOutfit = outfitRepository.findById(id);
+        if (optionalOutfit.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Outfit outfit = optionalOutfit.get();
+
+        if (dto.getCategoryIds() == null || dto.getCategoryIds().isEmpty()) {
+            outfit.setCategories(new ArrayList<>());
+        } else {
+            List<OutfitCategory> categories = outfitCategoryRepository.findAllById(dto.getCategoryIds());
+            outfit.setCategories(categories);
+        }
+
+        Outfit updated = outfitRepository.save(outfit);
+        return ResponseEntity.ok(updated);
+    }
+
 
 }
