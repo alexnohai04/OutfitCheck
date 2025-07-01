@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface ClothingItemRepository extends JpaRepository<ClothingItem, Long> {
     List<ClothingItem> findByOwnerId(Long userId);
+    List<ClothingItem> findByOwnerIdAndInLaundryFalse(Long ownerId);
+
 }

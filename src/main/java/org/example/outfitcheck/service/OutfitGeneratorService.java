@@ -17,20 +17,25 @@ public class OutfitGeneratorService {
     private ClothingItemRepository clothingItemRepository;
 
     private static final Map<String, String> COLOR_NAME_TO_HEX = Map.ofEntries(
-            Map.entry("Red",    "#FF0000"),
-            Map.entry("Blue",   "#0000FF"),
-            Map.entry("Green",  "#008000"),
-            Map.entry("Black",  "#000000"),
-            Map.entry("White",  "#FFFFFF"),
-            Map.entry("Gray",   "#808080"),
-            Map.entry("Grey",   "#808080"),
-            Map.entry("Yellow", "#FFFF00"),
-            Map.entry("Purple", "#800080"),
-            Map.entry("Pink",   "#FFC0CB"),
-            Map.entry("Brown",  "#A52A2A"),
-            Map.entry("Orange", "#FFA500"),
-            Map.entry("Beige",  "#F5F5DC")
+            Map.entry("Red",       "#FF0000"),
+            Map.entry("Dark Red",  "#8B0000"),
+            Map.entry("Blue",      "#0000FF"),
+            Map.entry("Light Blue","#ADD8E6"),
+            Map.entry("Green",     "#00FF00"),
+            Map.entry("Dark Green","#006400"),
+            Map.entry("Yellow",    "#FFFF00"),
+            Map.entry("Orange",    "#FFA500"),
+            Map.entry("Purple",    "#800080"),
+            Map.entry("Pink",      "#FFC0CB"),
+            Map.entry("Brown",     "#A52A2A"),
+            Map.entry("Black",     "#000000"),
+            Map.entry("White",     "#FFFFFF"),
+            Map.entry("Gray",      "#808080"),
+            Map.entry("Light Gray", "#D3D3D3"),
+            Map.entry("Dark Gray",  "#505050"),
+            Map.entry("Beige",     "#F5F5DC")
     );
+
 
     public List<OutfitSuggestionDTO> generateOutfits(
             Long userId,
@@ -41,7 +46,7 @@ public class OutfitGeneratorService {
             int topwearLayers,
             boolean preferFullBodywear
     ) {
-        List<ClothingItem> items = clothingItemRepository.findByOwnerId(userId);
+        List<ClothingItem> items = clothingItemRepository.findByOwnerIdAndInLaundryFalse(userId);
         // Prepare lists based on preference
         List<ClothingItem> tops;
         List<ClothingItem> bottoms;
@@ -131,6 +136,44 @@ public class OutfitGeneratorService {
 //                .collect(Collectors.toList());
 //    }
 
+    private static final Map<String, Map<String, Integer>> STYLE_COMPATIBILITY_SCORES = Map.of(
+            "casual", Map.of(
+                    "casual", 100,
+                    "smart casual", 40,
+                    "sport", 30,
+                    "formal", 10,
+                    "party", 50
+            ),
+            "smart casual", Map.of(
+                    "smart casual", 100,
+                    "casual", 80,
+                    "formal", 70,
+                    "party", 60,
+                    "sport", -50
+            ),
+            "formal", Map.of(
+                    "formal", 100,
+                    "smart casual", 60,
+                    "casual", 30,
+                    "sport", -50,
+                    "party", 50
+            ),
+            "sport", Map.of(
+                    "sport", 100,
+                    "casual", 30,
+                    "formal", -50,
+                    "smart casual", 0,
+                    "party", -50
+            ),
+            "party", Map.of(
+                    "party", 100,
+                    "smart casual", 70,
+                    "casual", 60,
+                    "formal", 20,
+                    "sport", -50
+            )
+    );
+
     private List<ClothingItem> filterBySeasonAndUsage(List<ClothingItem> items, String category, String season, String context) {
         return items.stream()
                 .filter(i -> isCategory(i, category) && i.getBaseColor() != null)
@@ -144,11 +187,11 @@ public class OutfitGeneratorService {
         requested = requested.toLowerCase();
         itemUsage = itemUsage.toLowerCase();
 
-        if (requested.equals("sport")) {
+        if (requested.equals("sports")) {
             return !itemUsage.equals("formal");
         }
         if (requested.equals("formal")) {
-            return !itemUsage.equals("sport");
+            return !itemUsage.equals("sports");
         }
         return true; // pentru alte stiluri (casual, streetwear, etc.)
     }
@@ -282,7 +325,15 @@ public class OutfitGeneratorService {
             ClothingItem item = clothingItemRepository.findById(id).orElse(null);
             if (item != null) {
                 if (season.equalsIgnoreCase(item.getSeason())) score += 10;
-                if (context.equalsIgnoreCase(item.getUsage()))  score += 100;
+                String itemStyle = Optional.ofNullable(item.getUsage()).orElse("").toLowerCase();
+                String requestedStyle = Optional.ofNullable(context).orElse("").toLowerCase();
+
+                int bonus = Optional.ofNullable(STYLE_COMPATIBILITY_SCORES.get(requestedStyle))
+                        .map(map -> map.getOrDefault(itemStyle, 0))
+                        .orElse(0);
+
+                score += bonus;
+
             }
         }
         return score;

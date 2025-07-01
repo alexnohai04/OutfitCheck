@@ -8,7 +8,8 @@ import {
     Dimensions,
     ActivityIndicator,
     TouchableOpacity,
-    TouchableWithoutFeedback, Modal
+    Image,
+    TouchableWithoutFeedback, Modal, ScrollView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { UserContext } from "../UserContext";
@@ -32,6 +33,9 @@ const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 const TodaysFitScreen = () => {
     const { userId } = useContext(UserContext);
     const navigation = useNavigation();
+
+    const [laundryModalVisible, setLaundryModalVisible] = useState(false);
+    const [selectedItems, setSelectedItems] = useState([]);
 
     const [todayOutfit, setTodayOutfit] = useState(null);
     const [loadingToday, setLoadingToday] = useState(true);
@@ -84,20 +88,123 @@ const TodaysFitScreen = () => {
     if (loadingToday) {
         return <Loading />;
     }
+    const toggleItemSelection = (id) => {
+        setSelectedItems((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    };
+
+    const washClothingItems = async (items) => {
+        const toWash = items.filter(it => !it.inLaundry); // doar cele care nu sunt deja în laundry
+
+        if (toWash.length === 0) {
+            Toast.show({ type: 'confirm', text1: 'All selected items are already in laundry' });
+            return;
+        }
+
+        try {
+            await Promise.all(
+                toWash.map(it =>
+                    apiClient.patch(API_URLS.TOGGLE_LAUNDRY(it.id), { inLaundry: true })
+                )
+            );
+
+            // Actualizează starea locală dacă vrei
+            setTodayOutfit(prev => ({
+                ...prev,
+                clothingItems: prev.clothingItems.map(it =>
+                    toWash.some(w => w.id === it.id)
+                        ? { ...it, inLaundry: true }
+                        : it
+                )
+            }));
+
+            Toast.show({ type: 'confirm', text1: `${toWash.length} items sent to laundry` });
+        } catch (error) {
+            console.error("Error sending to laundry", error);
+            Toast.show({ type: 'error', text1: 'Failed to update laundry state' });
+        }
+    };
+
 
     if (todayOutfit) {
         return (
-            <SafeAreaView style={globalStyles.container}>
+            <>
+                <SafeAreaView style={globalStyles.container}>
                     <Text style={styles.todayTitle}>Today's Outfit</Text>
                     <View style={styles.previewContainer}>
                         <OutfitPreview clothingItems={todayOutfit.clothingItems} size="large" enableTooltip />
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => setLaundryModalVisible(true)}
+                        >
+                            <Ionicons
+                                name="water-outline"
+                                size={25}
+                                color="#89cff0"
+                                style={styles.icon}
+                            />
+                        </TouchableOpacity>
                     </View>
                     <TouchableOpacity style={styles.chooseButton} onPress={chooseAnother}>
                         <Ionicons name="refresh-outline" size={24} color="#FF6B6B" />
                         <Text style={styles.chooseText}>Choose another outfit</Text>
                     </TouchableOpacity>
-            </SafeAreaView>
-        );
+                </SafeAreaView>
+
+                {/* Modalul e în afara SafeAreaView, dar în același return */}
+                <Modal
+                    visible={laundryModalVisible}
+                    animationType="fade"
+                    transparent={true}
+                    onRequestClose={() => setLaundryModalVisible(false)}
+                >
+                    <TouchableWithoutFeedback onPress={() => setLaundryModalVisible(false)}>
+                        <View style={styles.laundryOverlay} />
+                    </TouchableWithoutFeedback>
+
+                    <View style={styles.laundryBottomSheet}>
+                        <View style={globalStyles.dragBar} />
+                        <Text style={styles.laundryTitle}>Select items</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+                            {todayOutfit.clothingItems.map((item) => (
+                                <TouchableOpacity
+                                    key={item.id}
+                                    onPress={() => toggleItemSelection(item.id)}
+                                    style={[
+                                        styles.laundryItemBox,
+                                        selectedItems.includes(item.id) && styles.laundryItemBoxSelected
+                                    ]}
+                                >
+                                    {item.base64Image ? (
+                                        <Image source={{ uri: item.base64Image }} style={styles.laundryImageSmall} />
+                                    ) : (
+                                        <View style={styles.imagePlaceholder}>
+                                            <Text style={styles.imagePlaceholderText}>No Image</Text>
+                                        </View>
+                                    )}
+                                    <Text numberOfLines={1} style={styles.laundryItemText}>{item.articleType}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style={styles.laundrySendButton}
+                            onPress={() => {
+                                const selected = todayOutfit.clothingItems.filter(item => selectedItems.includes(item.id));
+                                washClothingItems(selected);
+                                setLaundryModalVisible(false);
+                                setSelectedItems([]);
+                            }}
+                        >
+                            <Text style={styles.laundrySendButtonText}>Send to Laundry</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
+
+            </>
+
+    );
     }
 
     // Normal flow: shuffle or generate
@@ -450,7 +557,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 100,
-        backgroundColor: '#1E1E1E',
+        backgroundColor: '#1c1c1c',
         paddingTop: 48,
         paddingBottom: 12,
     },
@@ -516,6 +623,167 @@ const styles = StyleSheet.create({
         width: '80%',
         height: '65%',
     },
+    modalButton: {
+        // flexDirection: 'row',
+        // alignItems: 'center',
+        paddingVertical: 10,
+        position: "absolute",
+        bottom: 5,
+        right: 8
+    },
+    laundryModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalCard: {
+        width: '85%',
+        backgroundColor: '#2C2C2E',
+        borderRadius: 16,
+        padding: 20,
+    },
+    laundryModalTitle: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    itemRow: {
+        padding: 12,
+        backgroundColor: '#3A3A3C',
+        marginBottom: 8,
+        borderRadius: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    itemRowSelected: {
+        backgroundColor: '#5ac8fa', // albastru selectat
+    },
+    itemText: {
+        color: '#fff',
+    },
+    sendButton: {
+        backgroundColor: '#89cff0',
+        padding: 14,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    sendButtonText: {
+        color: '#000',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    laundryItemCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: '#3A3A3C',
+        marginBottom: 10,
+        borderRadius: 12,
+    },
+    laundryItemCardSelected: {
+        backgroundColor: '#5ac8fa',
+    },
+    laundryImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 10,
+        marginRight: 12,
+        backgroundColor: '#444',
+    },
+    imagePlaceholder: {
+        width: 50,
+        height: 50,
+        borderRadius: 10,
+        backgroundColor: '#444',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    imagePlaceholderText: {
+        color: '#AAA',
+        fontSize: 10,
+    },
+    laundryOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+
+    },
+
+    laundryBottomSheet: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#1E1E1E',
+        paddingVertical: 20,
+        paddingHorizontal: 16,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+    },
+
+
+    laundryTitle: {
+        color: '#FFF',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 14,
+    },
+
+    horizontalScroll: {
+        paddingVertical: 8,
+    },
+
+    laundryItemBox: {
+        width: 70,
+        alignItems: 'center',
+        marginRight: 12,
+        backgroundColor: '#2C2C2E',
+        padding: 8,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#2C2C2E',
+    },
+
+    laundryItemBoxSelected: {
+        borderColor: '#89cff0',
+        borderWidth: 2,
+    },
+
+    laundryImageSmall: {
+        width: 50,
+        height: 50,
+        borderRadius: 8,
+        marginBottom: 6,
+       // backgroundColor: '#444',
+    },
+
+    laundryItemText: {
+        color: '#fff',
+        fontSize: 12,
+        textAlign: 'center',
+    },
+
+    laundrySendButton: {
+        backgroundColor: '#89cff0',
+        marginTop: 20,
+        borderRadius: 10,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+
+    laundrySendButtonText: {
+        color: '#000',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+
+
+
 
 });
 

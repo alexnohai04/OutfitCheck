@@ -215,7 +215,7 @@ const GenerateFormView = ({ onNext }) => {
 
 const styles = StyleSheet.create({
     fullScreenWrapper: {
-        backgroundColor: '#1E1E1E',
+        backgroundColor: '#1c1c1c',
         paddingTop: Platform.OS === 'android' ? 40 : 0,
         justifyContent: 'flex-start',
         paddingHorizontal: 20,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     },
     loadingContainer: {
         flex: 1,
-        backgroundColor: '#1E1E1E',
+        backgroundColor: '#1c1c1c',
         justifyContent: 'center',
         alignItems: 'center',
     },

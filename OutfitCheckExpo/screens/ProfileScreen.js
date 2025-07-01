@@ -55,7 +55,7 @@ const ProfileScreen = () => {
             setOutfits(processedOutfits.sort((a, b) => b.id - a.id));
 
         } catch (error) {
-            console.error("❌ Error fetching user:", error.response?.data || error.message);
+            console.log("❌ Error fetching user:", error.response?.data || error.message);
         } finally {
             setLoading(false);
         }

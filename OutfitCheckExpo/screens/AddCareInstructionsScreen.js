@@ -103,12 +103,46 @@ const AddCareInstructionsScreen = () => {
         }
     };
 
-    const pickLabelImage = async () => {
+    const pickLabelImage = () => {
+        Alert.alert(
+            'Select Image Source',
+            'Choose how you want to pick the image:',
+            [
+                {
+                    text: 'Camera',
+                    onPress: () => openCamera()
+                },
+                {
+                    text: 'Gallery',
+                    onPress: () => openGallery()
+                },
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                }
+            ]
+        );
+    };
+
+    const openCamera = async () => {
         const result = await ImagePicker.launchCameraAsync({
+            quality: 0.7,
             base64: false,
-            quality: 0.7
         });
 
+        handleImageResult(result);
+    };
+
+    const openGallery = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            quality: 0.7,
+            base64: false,
+        });
+
+        handleImageResult(result);
+    };
+
+    const handleImageResult = async (result) => {
         if (!result.canceled && result.assets?.[0]) {
             const resizedBase64 = await resizeImage(result.assets[0].uri);
             if (resizedBase64) {

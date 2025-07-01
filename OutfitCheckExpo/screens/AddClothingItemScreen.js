@@ -15,15 +15,14 @@ import {
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { UserContext } from "../UserContext";
 import apiClient from "../apiClient";
 import API_URLS from "../apiConfig";
 import { processClothingItemAfterBgRemoval } from "../utils/imageUtils";
 import Toast from "react-native-toast-message";
-import namer from "color-namer";
+import getNearestBasicColorName from "../utils/colorNameUtils";
 import {Ionicons} from "@expo/vector-icons";
-import Autocomplete from "react-native-autocomplete-input";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import baseColors from '../utils/colorMap'; // sau calea unde e definit
+
 
 
 const AddClothingItemScreen = () => {
@@ -141,29 +140,38 @@ const AddClothingItemScreen = () => {
         }
     }, [articleTypeQuery]);
 
-
     useEffect(() => {
         if (topColors.length > 0 && colors.length === 0) {
-            const translated = topColors.map(c => {
-                const name = namer(c.hex).ntc[0].name;
-                return { name, hex: c.hex };
-            });
+            const translated = topColors.map((c) => ({
+                name: getNearestBasicColorName(c.hex),
+                hex: c.hex,
+            }));
 
-            let base = suggestedBaseColour;
-            if (!base && translated.length > 0) {
-                base = translated[0].name;
+            const topBaseColor = translated.length > 0 ? translated[0].name : null;
+            let updatedColors = [...translated];
+
+            if (
+                suggestedBaseColour &&
+                !updatedColors.find(c => c.name.toLowerCase() === suggestedBaseColour.toLowerCase())
+            ) {
+                // Caută hex-ul asociat cu suggestedBaseColour din paleta definită
+                const matchedHex = baseColors[suggestedBaseColour] || "#999999";
+
+                updatedColors.push({
+                    name: suggestedBaseColour,
+                    hex: matchedHex,
+                });
             }
 
-            setSelectedBaseColor(base);
-            setColors(translated);
+            setSelectedBaseColor(topBaseColor || suggestedBaseColour || '');
+            setColors(updatedColors);
         }
-
 
         if (suggestedCategory && items.length > 0 && !category) {
             const matched = items.find(cat => cat.label.toLowerCase() === suggestedCategory.toLowerCase());
             if (matched) setCategory(matched.value);
         }
-    }, [topColors, suggestedCategory, items]);
+    }, [topColors, suggestedBaseColour, suggestedCategory, items]);
 
 
 

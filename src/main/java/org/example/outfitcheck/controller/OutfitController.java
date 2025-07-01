@@ -76,6 +76,12 @@ public class OutfitController {
         return ResponseEntity.ok(outfits);
     }
 
+    @GetMapping("/user_available/{userId}")
+    public ResponseEntity<List<Outfit>> getAvailableOutfitsByUser(@PathVariable Long userId) {
+        List<Outfit> outfits = outfitRepository.findByCreatorIdAndVisibleTrue(userId);
+        return ResponseEntity.ok(outfits);
+    }
+
     @GetMapping("/user_public/{userId}")
     public ResponseEntity<List<Outfit>> getPublicOutfitsByUser(@PathVariable Long userId) {
         List<Outfit> outfits = outfitRepository.findByCreatorIdAndVisibleTrue(userId);
